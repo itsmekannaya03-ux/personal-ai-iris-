@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IGRIS AI — All Features Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: #0d0d0d; color: #e0e0e0; padding: 30px; }
+  h1 { font-size: 24px; margin-bottom: 5px; }
+  .sub { color: #888; margin-bottom: 25px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 900px; }
+  .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 18px; }
+  .card h3 { font-size: 14px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  input, select, textarea { width: 100%; padding: 8px 10px; background: #0d0d0d; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 14px; margin-bottom: 8px; }
+  textarea { min-height: 60px; resize: vertical; font-family: monospace; }
+  button { padding: 8px 16px; background: #6c5ce7; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px; }
+  button:hover { background: #7c6cf7; }
+  .output { background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 6px; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 13px; white-space: pre-wrap; min-height: 40px; color: #a0ffa0; }
+  pre { margin: 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px; }
+  .badge-intent { background: #6c5ce733; color: #a78bfa; }
+  .badge-emotion { background: #f59e0b33; color: #fbbf24; }
+  .badge-mode { background: #10b98133; color: #34d399; }
+  .badge-detail { background: #3b82f633; color: #60a5fa; }
+  .status-line { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .status-line span { font-size: 12px; padding: 3px 10px; border-radius: 12px; background: #2a2a2a; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>IGRIS AI</h1>
+<div class="sub">All features test — Intent + Emotion + Modes + Detail switching</div>
+
+<div class="status-line" id="status"></div>
+
+<div class="grid">
+  <div class="card">
+    <h3>Send a Message</h3>
+    <textarea id="message" placeholder="Type anything... e.g. 'explain quantum computing' or 'I'm so frustrated'">open chrome</textarea>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="modeSelect" style="width:auto;flex:1">
+        <option value="normal">Normal</option>
+        <option value="assistant">Assistant</option>
+        <option value="friend">Friend</option>
+        <option value="focus">Focus</option>
+        <option value="silent">Silent</option>
+      </select>
+      <button onclick="setMode()">Set Mode</button>
+      <button onclick="sendMessage()" style="background:#10b981">Send</button>
+    </div>
+    <div class="output" id="chatOutput">Response will appear here...</div>
+    <div style="margin-top:8px;font-size:12px;color:#666">
+      <span class="badge badge-intent" id="detectedIntent">intent: —</span>
+      <span class="badge badge-emotion" id="detectedEmotion">emotion: —</span>
+      <span class="badge badge-detail" id="detectedDetail">detail: —</span>
+      <span class="badge badge-mode" id="currentMode">mode: normal</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Quick Test Buttons</h3>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button onclick="quick('explain how memory works')">📖 "explain how memory works"</button>
+      <button onclick="quick('I am so happy today!')">😊 "I am so happy today!"</button>
+      <button onclick="quick('this is so frustrating')">😤 "this is so frustrating"</button>
+      <button onclick="quick('I am stressed about the deadline')">😰 "stressed about deadline"</button>
+      <button onclick="quick('open chrome')">🔓 "open chrome"</button>
+      <button onclick="quick('search YouTube for AI tutorials')">🔍 "search YouTube for AI"</button>
+      <button onclick="quick('play some music')">🎵 "play some music"</button>
+      <button onclick="quick('what is the weather')">🌤 "what is the weather"</button>
+    </div>
+    <div style="margin-top:12px">
+      <h3>Engine Status</h3>
+      <div class="output" id="statusOutput">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ENGINE = "http://127.0.0.1:5743";
+
+async function sendMessage() {
+  const msg = document.getElementById("message").value.trim();
+  if (!msg) return;
+  document.getElementById("chatOutput").textContent = "Waiting for response...";
+  try {
+    const r = await fetch(ENGINE + "/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: msg})
+    });
+    const d = await r.json();
+    document.getElementById("chatOutput").textContent = d.response || JSON.stringify(d);
+  } catch (e) {
+    document.getElementById("chatOutput").textContent = "Error: " + e.message;
+  }
+}
+
+async function quick(msg) {
+  document.getElementById("message").value = msg;
+  await sendMessage();
+}
+
+async function setMode() {
+  const mode = document.getElementById("modeSelect").value;
+  document.getElementById("chatOutput").textContent = "Changing mode to " + mode + "...";
+  try {
+    const r = await fetch(ENGINE + "/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: "/mode " + mode})
+    });
+    const d = await r.json();
+    document.getElementById("chatOutput").textContent = d.response || JSON.stringify(d);
+    document.getElementById("currentMode").textContent = "mode: " + mode;
+    getStatus();
+  } catch (e) {
+    document.getElementById("chatOutput").textContent = "Error: " + e.message;
+  }
+}
+
+async function getStatus() {
+  try {
+    const r = await fetch(ENGINE + "/status");
+    const d = await r.json();
+    document.getElementById("statusOutput").textContent = JSON.stringify(d, null, 2);
+    document.getElementById("status").innerHTML =
+      '<span style="background:#10b98133;color:#34d399">● Engine: running</span>' +
+      '<span>Mode: ' + d.mode + '</span>' +
+      '<span>AI: ' + (d.ai_name || "IGRIS") + '</span>' +
+      '<span>Memory: ' + d.memory.short_term + ' ST / ' + d.memory.long_term + ' LT / ' + d.memory.deep + ' deep</span>';
+    document.getElementById("currentMode").textContent = "mode: " + d.mode;
+  } catch (e) {
+    document.getElementById("statusOutput").textContent = "Engine not running on " + ENGINE;
+  }
+}
+
+getStatus();
+setInterval(getStatus, 5000);
+</script>
+</body>
+</html>
