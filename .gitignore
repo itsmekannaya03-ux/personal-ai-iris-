@@ -20,3 +20,8 @@ chroma/
 deep_memory.json
 profile.json
 .igris/
+*.pem
+*.cert
+coverage/
+htmlcov/
+.env.example

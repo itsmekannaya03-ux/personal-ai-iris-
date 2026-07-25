@@ -21,13 +21,14 @@ const nextConfig = {
         destination: "http://localhost:5743/system",
       },
       {
-        source: "/api/profile",
-        destination: "http://localhost:5743/profile",
+        source: "/api/conversation/:path*",
+        destination: "http://localhost:5743/conversation/:path*",
       },
+
       // Cloud API (port 8000) — auth, subscriptions, downloads
       {
         source: "/api/:path*",
-        destination: "http://localhost:8000/:path*",
+        destination: "http://localhost:8001/:path*",
       },
     ]
   },

@@ -1,0 +1,1 @@
+# Encrypted permanent memory storage

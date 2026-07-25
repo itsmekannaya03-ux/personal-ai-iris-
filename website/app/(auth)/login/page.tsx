@@ -21,6 +21,7 @@ export default function LoginPage() {
     try {
       const res = await api.auth.login(form)
       localStorage.setItem("igris_token", res.token)
+      localStorage.setItem("igris_refresh", res.refresh_token)
       router.push("/dashboard")
     } catch (err: any) {
       setError(err.message)

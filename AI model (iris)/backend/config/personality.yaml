@@ -1,0 +1,23 @@
+# Jarvis AI Personality Configuration
+name: "Jarvis"
+owner_title: "Sir"
+formality: 0.7        # 0.0 (casual) -> 1.0 (formal)
+wit_level: 0.4        # 0.0 (serious) -> 1.0 (always witty)
+tone: "professional"  # professional, warm, witty, calm
+
+# Time-based greetings
+morning_hour: 6
+evening_hour: 18
+night_hour: 22
+
+# Voice mapping defaults
+default_voice_preset: "andrew"
+personality_voice_map:
+  professional: "andrew"
+  warm: "ava"
+  friendly: "jenny"
+  authoritative: "christopher"
+  casual: "guy"
+  refined: "steffan"
+  calm: "jane"
+  assistant: "sarah"

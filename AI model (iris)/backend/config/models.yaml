@@ -1,0 +1,21 @@
+# Model Configuration
+active_backend: "ollama"  # ollama, openai, custom, rule_based
+
+ollama:
+  model_name: "llama3.2"
+  url: "http://localhost:11434"
+  timeout: 60
+
+openai:
+  api_key: ""
+  api_url: ""
+  model_name: "gpt-4"
+
+custom:
+  model_path: ""
+  model_type: ""
+
+inference:
+  max_tokens: 2048
+  temperature: 0.7
+  top_p: 0.9

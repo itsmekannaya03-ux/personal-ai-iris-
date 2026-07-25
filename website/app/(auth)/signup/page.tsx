@@ -46,6 +46,7 @@ export default function SignupPage() {
         name: form.name,
       })
       localStorage.setItem("igris_token", res.token)
+      localStorage.setItem("igris_refresh", res.refresh_token)
       await api.profile.update({
         age: parseInt(form.age),
         job: form.job,

@@ -1,0 +1,36 @@
+# Core
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+websockets>=12.0
+
+# Inference (choose what you need)
+# ollama - install separately from https://ollama.ai
+# openai - pip install openai
+
+# Memory
+# chromadb - optional vector memory (pip install chromadb)
+
+# Voice synthesis
+edge-tts>=6.0.0
+
+# Vision (optional)
+# pyscreenshot>=3.0  - screen capture
+# Pillow>=10.0.0     - image processing
+
+# Automation (optional)
+# pyautogui>=0.9.0   - keyboard/mouse control
+# pynput>=1.7.0      - input monitoring
+
+# Web search (optional)
+# duckduckgo-search>=4.0.0
+
+# Training (optional)
+# transformers>=4.35.0
+# datasets>=2.14.0
+# torch>=2.0.0
+# peft>=0.6.0
+# accelerate>=0.24.0
+
+# Testing
+pytest>=7.0.0
