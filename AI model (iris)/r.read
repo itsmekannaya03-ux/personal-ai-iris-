@@ -1,0 +1,527 @@
+# IRIS AI — SYSTEM ARCHITECTURE, IMPLEMENTATION RECORD & MASTER REFERENCE GUIDE
+# Document Identifier: r.read (Master Key Book)
+
+This document is the authoritative master reference guide and key book for the IRIS (Integrated Reactive Intelligent System) desktop artificial intelligence project. It provides an exhaustive, comprehensive breakdown of every subsystem, mechanism, parameter, protocol, and database schema implemented or currently in progress. All questions in technical examinations and assessments can be verified and answered directly from the technical explanations recorded below.
+
+---
+
+## CHAPTER 1: SYSTEM OVERVIEW, ENVIRONMENT & AUTONOMOUS LAUNCHER ARCHITECTURE
+
+### 1.1 Fundamental Purpose and Identity
+IRIS (Integrated Reactive Intelligent System) is a fully autonomous, multimodal desktop AI assistant and companion engineered natively for the Microsoft Windows operating system. Unlike web-based chatbot wrappers, IRIS is physically embodied on the desktop, possessing native voice synthesis, microphone listening, camera presence detection, computer vision (screen analysis and OCR), operating system hands (automating Windows applications, file operations, web navigation, and command terminals), and persistent multi-layer encrypted memory.
+
+### 1.2 Core Technology Stack & Network Ports
+- Operating System: Microsoft Windows 10 / 11 (64-bit).
+- Primary Programming Language: Python 3.12.
+- Web Application Framework: FastAPI (Uvicorn ASGI server).
+- Backend API Server Port: Port 5743 (bound locally to `127.0.0.1:5743`).
+- Frontend Web Interface Port: Port 3001 (bound locally to `127.0.0.1:3001`).
+- Local Ollama Daemon Port: Port 11434 (`http://localhost:11434`).
+- Inter-Process Bridge: PyWebView / WebView2 desktop integration communicating via direct in-process bridge methods and REST fetch calls.
+
+### 1.3 Command-Line Installation and Autonomous Launching
+- Installation Script Language: Windows Batch Scripting (`.bat` files: `setup_iris.bat` and `setup.bat`).
+- Launcher File Name: `setup_iris.bat`.
+- Automated Startup Routine:
+  1. Checks for system environment prerequisites: verifies that Python and Node.js (`npm`) exist in the system PATH.
+  2. Resolves virtual environments: checks for local `.venv` inside `AI model (iris)/.venv` or parent `.venv`, automatically executing `activate.bat`.
+  3. Automated Port Conflict Resolution: runs `netstat -ano` and utilizes Windows `taskkill /F /PID` to terminate stale lingering processes holding ports 5743 or 3001 before launching new services.
+  4. Parallel Service Startup: starts the FastAPI backend server on port 5743 using `run_server.py` and concurrently boots the desktop overlay window.
+  5. Pre-warm Routine: upon startup, Iris fires four parallel background threads: LLM model pre-warming (Ollama/Groq), voice pre-synthesis of common greetings, camera capture initialization, and microphone hardware driver polling.
+
+---
+
+## CHAPTER 2: USER INTERFACE, DUAL DESKTOP OVERLAY & THINKINGORB VISUALIZATION
+
+### 2.1 Dual Window Desktop Overlay Architecture
+IRIS features a dual-interface desktop overlay system powered by PyWebView:
+1. Pinned Top-Center Mini Orb: A compact, roughly 1-centimeter floating circular widget pinned to the top-center edge of the screen. It stays always-on-top, reflects engine state via glowing cyan/purple pulses, and toggles the main interface on click.
+2. Main Assistant Window (`main_window.html`): A floating, frameless desktop window with rounded glassmorphic borders (radius 20px, dark theme `#0A0F1D`), custom draggable title bar (`-webkit-app-region: drag`), animated ThinkingOrb canvas, live biometric/vision telemetry HUD, quick-action prompt chips, and a scrollable chat thread.
+
+### 2.2 The ThinkingOrb Generative Canvas Engine
+The visual centerpiece of IRIS is the ThinkingOrb, rendered in real time on an HTML5 2D canvas (`#blob-canvas`, dimension 160x160 with device pixel ratio scaling):
+- Mathematical Architecture: Derived from Jakub Antalik / HorizonX algorithmic orb principles, utilizing mathematical Fibonacci sphere projection (`fibDir`), 3D trigonometric coordinate transformations (`makeProj`), and depth sorting.
+- Dynamic States and Colors:
+  - Idle / Composing Mode: Cyan glowing ribbon frame (`#00F0FF`, 0.09-0.4 alpha, 130 ghost particles, multi-lane sinusoidal waving bands). Represents ready standby.
+  - Hearing / Listening Mode: Emerald green pulsating wave (`#10B981`) triggered automatically whenever user voice activity is detected.
+  - Thinking & Reasoning Mode: Deep royal purple orbiting sphere (`#A855F7`) active during LLM inference and step planning.
+  - Speaking Mode: Soft blue glowing orbital expansion (`#38BDF8`) synchronized with voice playback.
+
+### 2.3 Live Telemetry HUD (Heads-Up Display)
+Directly beneath the ThinkingOrb canvas sits the live status telemetry HUD:
+- `🎙️ MIC: LIVE / MUTED`: Shows microphone status; clickable to mute or unmute continuous listening.
+- `👁️ VISION: LIVE`: Indicates camera and screen background sentinel status.
+- `👤 User: [Name]`: Displays biometric identification (identifies Commander or triggers enrollment).
+- `😊 Emotion Tag`: Reflects detected emotional state (Happy, Sad, Neutral, Angry, Surprised, Focused).
+- `🖥️ Screen Tag`: Displays the title of the active foreground Windows window in real time.
+- Quick Vision Buttons: Dedicated `👁️ See Screen` and `📷 See Camera` buttons for instant visual inspection.
+
+---
+
+## CHAPTER 3: SPEECH SYNTHESIS (TTS) ARCHITECTURE & ZERO-INTERNET GUARANTEE
+
+### 3.1 Primary Online Speech Synthesis: Edge-TTS
+- Engine: Microsoft Edge-TTS (high-definition cloud neural voice synthesis).
+- Primary Voice Model: `en-US-JennyNeural` (warm, natural adult female American English voice).
+- Voice Preset Key: `"sweet"` mapped to `en-US-JennyNeural`.
+- Alternative Presets: `warm` / `velvet` mapped to `en-US-MichelleNeural`; Hindi clones mapped to `hi-IN-SwaraNeural` (female) and `hi-IN-MadhurNeural` (male).
+- Crucial Voice Tuning Parameters:
+  - Speech Rate: Set to `+0%` (natural normal conversational tempo, completely resolving previous slow dragging speech issues).
+  - Speech Pitch: Pinned to `-7Hz` (warm, sweet, gentle low pitch, eliminating overly bold, harsh, or high-pitch tones).
+  - Volume: `+0%`.
+
+### 3.2 100% Zero-Internet TTS Guarantee: Windows Native SAPI5 & pyttsx3 Fallback
+- Requirement: Iris must speak instantly without internet connectivity.
+- Problem Solved: In standard cloud setups, when internet is disconnected, cloud TTS requests attempt network resolution and hang for up to 9 seconds before failing.
+- Solution Implemented in `backend/voice_engine.py`:
+  - Instant Connectivity Check: Fast non-blocking socket connection test to DNS port 53 (`1.1.1.1` and `8.8.8.8`) with a 400ms timeout, cached for 4.0 seconds.
+  - Immediate Edge-TTS Bypass: If offline, Iris completely skips Edge-TTS with 0.00ms network delay.
+  - Native Offline Engine: Calls Windows SAPI5 (`win32com.client.Dispatch("SAPI.SpVoice")`) with automatic path normalization via `os.path.normpath(os.path.abspath(wav_path))`.
+  - Offline Voice Selection: Automatically scans system registry for female desktop voices, selecting `Microsoft Zira Desktop - English (United States)`.
+  - Secondary Local Fallback: If COM dispatch is unavailable, falls back directly to `pyttsx3` initialized locally.
+  - Offline Latency Performance: Generates offline spoken WAV files in **less than 0.35 seconds**.
+
+### 3.3 Audio Subprocess Playback & Clean Interruption (Barge-In)
+- Playback Worker: Audio files (MP3 or WAV) are queued sequentially onto a dedicated background thread to guarantee audio never overlaps.
+- Audio Player: Played through an `ffplay` subprocess with flags `-nodisp -autoexit -loglevel quiet`.
+- Clean Interruption (Barge-In): When the user speaks, clicks the microphone button, or issues a new command, `interruptAssistantSpeech()` instantly calls `proc.kill()` on the active `ffplay` process and clears the audio queue. This provides clean, instantaneous cut-off without audio distortion.
+
+---
+
+## CHAPTER 4: SPEECH RECOGNITION (STT), VAD & AUDIO DAEMON ARCHITECTURE
+
+### 4.1 Speech Recognition Cascade Architecture
+Iris utilizes a robust 5-tier fallback cascade for speech-to-text recognition:
+1. Tier 1 (Primary Cloud STT): Groq Whisper Cloud API (`whisper-large-v3`) with English language pinning (`language="en"`), temperature 0.0, and contextual prompt hinting ("Iris, WhatsApp, message, YouTube, automation").
+2. Tier 2 (Secondary Free Online STT): Google Speech Recognition via `speech_recognition` library (`r.recognize_google(audio)`).
+3. Tier 3 (Tertiary Cloud STT): OpenAI Whisper API (`whisper-1`).
+4. Tier 4 (Local PyTorch Whisper - In Progress): Local OpenAI Whisper model (`small`/`base`). Currently half-completed awaiting local PyTorch binary installation.
+5. Tier 5 (Guaranteed 100% Offline STT): Windows Native Speech Recognition Engine (`System.Speech.Recognition.SpeechRecognitionEngine`) implemented in `backend/offline_stt.py`.
+
+### 4.2 Windows Native Offline STT Engine (`backend/offline_stt.py`)
+- Technology: Leverages the built-in Microsoft Windows Speech API (.NET assembly `System.Speech.dll`).
+- Architecture: Executes `System.Speech.Recognition.SpeechRecognitionEngine` with a `DictationGrammar` using an optimized, cached PowerShell child process (`powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass`).
+- Zero Cloud Dependency: Requires zero internet connection, zero API keys, and zero external machine-learning libraries.
+- Features: Handles 16-bit PCM WAV audio, utilizes unique temporary files generated via `uuid.uuid4().hex` to prevent multi-threaded file collisions, and achieves transcription in **0.80 to 1.10 seconds**.
+
+### 4.3 Continuous Voice Daemon (`backend/continuous_voice_daemon.py`)
+- Operation: Always-on background microphone listener running continuously without requiring manual push-to-talk button presses.
+- Input Hardware Resolution: `find_best_input_device()` queries Windows WASAPI and MME audio devices via `sounddevice` to locate the optimal physical hardware microphone, resampling audio to 16,000 Hz.
+- Voice Activity Detection (VAD) Tuning:
+  - RMS Noise Floor: Configured to 4.0 RMS floor to eliminate background fan and ambient room noise.
+  - Pre-Speech Audio Buffer: Set to 750 milliseconds (0.75s) to guarantee the very first syllable or consonant of the user's speech is never clipped.
+  - Silence Timeout: Set to 1.25 seconds (1250ms) of sustained silence before finalizing an utterance.
+  - Acoustic Loop Prevention: Implements `record_assistant_speech()` to track and ignore Iris's own voice output, preventing self-triggering feedback loops.
+
+---
+
+## CHAPTER 5: HYBRID MODEL ROUTING & LOCAL OLLAMA INTELLIGENCE
+
+### 5.1 Hybrid Router Concept & Modes (`backend/engine/hybrid_model_router.py`)
+The Hybrid Model Router abstracts all AI model interactions, providing seamless switching between remote cloud providers and local offline intelligence:
+- Operating Modes:
+  1. `Auto Mode` (Smart Routing): Primary mode. Tests network socket connectivity. If online, routes to Groq cloud intelligence. If offline or if the cloud API fails or hits rate limits, it falls back seamlessly to local Ollama with zero user disruption.
+  2. `Offline Only Mode`: Forces all queries to local Ollama models even when an active internet connection is present.
+  3. `Cloud Only Mode`: Enforces cloud-only processing.
+  4. `Manual Mode`: Allows explicit user locking to a specific provider and model.
+
+### 5.2 Local Ollama Client (`backend/engine/ollama_client.py`)
+- Target Daemon: Ollama HTTP service listening on `http://localhost:11434`.
+- Installed Models on User Machine:
+  - `llama3.2:3b`: 3-billion parameter model optimized for conversational reasoning, general assistant tasks, and empathetic dialogue.
+  - `qwen2.5:1.5b`: 1.5-billion parameter model specialized for high-speed technical problem solving and code generation.
+- Client Capabilities:
+  - `is_available()`: Health check probing `/api/tags` with a 3-second cache to prevent network flooding.
+  - `list_models()`: Discovers installed models, memory sizes, parameter counts, and quantization levels.
+  - `chat()`: Dispatches structured messages to `/api/chat` with configurable temperature and token limits.
+  - `chat_stream()`: Line-by-line generator streaming tokens as they are produced.
+- Cold-Start vs Warm Performance: First cold-start load takes approximately 5 to 10 seconds; subsequent warm responses execute in **2.1 to 2.6 seconds**.
+
+### 5.3 Cloud Intelligence Providers
+- Groq Cloud API: Primary online provider utilizing `qwen/qwen3.8-27b` with fallbacks to `llama-3.3-70b-versatile` and `llama-3.1-8b-instant`.
+- OpenAI API: Secondary cloud fallback utilizing `gpt-4o-mini`.
+
+---
+
+## CHAPTER 6: MEMORY ARCHITECTURE & DATABASE SCHEMA (SQLITE 3-TIER + CONVERSATIONS)
+
+### 6.1 Database Infrastructure
+- Database Engine: SQLite 3.
+- Database File Location: `~/.iris/memory.db` (located at `C:\Users\<User>\.iris\memory.db`).
+- Security Encryption: Field-level AES-256 encryption (`cryptography.fernet`) for deep permanent memories, backed by a persistent secret key file at `~/.iris/secret.key`.
+
+### 6.2 The 3-Tier Core Memory Hierarchy
+1. Tier 1: Temporary Memories (`temp_memories` table):
+   - Purpose: Ephemeral context, active working thoughts, short-term session data.
+   - Time-To-Live (TTL): 48 hours.
+   - Columns: `key` (TEXT PK), `content` (TEXT), `timestamp` (REAL), `mention_count` (INTEGER), `metadata` (TEXT).
+2. Tier 2: Long Temporary Memories (`long_temp_memories` table):
+   - Purpose: Project tasks, ongoing todo items, active reminders, multi-day context.
+   - Time-To-Live (TTL): 18 days.
+   - Columns: `key` (TEXT PK), `content` (TEXT), `first_seen` (REAL), `timestamp` (REAL), `mention_count` (INTEGER), `metadata` (TEXT).
+3. Tier 3: Deep Permanent Memories (`deep_memories` table):
+   - Purpose: Core user identity, relationships, Commander preferences, critical facts.
+   - Time-To-Live (TTL): Permanent (infinite retention).
+   - Security: Encrypted at rest via AES-256 Fernet cipher.
+   - Columns: `key` (TEXT PK), `content` (TEXT - encrypted), `timestamp` (REAL), `mention_count` (INTEGER), `metadata` (TEXT).
+
+### 6.3 Multi-Conversation Database Schema
+To support independent conversation sessions, two dedicated relational tables exist in SQLite:
+1. `conversations` Table:
+   - `id` (TEXT PRIMARY KEY): Unique identifier (`conv_<hex12>`).
+   - `title` (TEXT NOT NULL): Conversation title or topic name.
+   - `person_name` (TEXT): Name of the individual for dedicated person chats (e.g., "Kannaya"). Null for general topics.
+   - `system_prompt` (TEXT): Custom system persona or instruction for this thread.
+   - `created_at` (REAL NOT NULL): Epoch timestamp of creation.
+   - `updated_at` (REAL NOT NULL): Epoch timestamp of latest message.
+   - `metadata` (TEXT): JSON-encoded metadata.
+   - Indices: `idx_conv_updated` ON `conversations(updated_at DESC)`, `idx_conv_person` ON `conversations(person_name)`.
+2. `conversation_messages` Table:
+   - `id` (TEXT PRIMARY KEY): Unique message identifier (`msg_<hex12>`).
+   - `conversation_id` (TEXT NOT NULL): Foreign key referencing `conversations(id)` with `ON DELETE CASCADE`.
+   - `role` (TEXT NOT NULL): Message sender role (`user`, `assistant`, `system`).
+   - `content` (TEXT NOT NULL): Raw message content.
+   - `provider` (TEXT): Provider that generated the response (`groq`, `ollama`, `openai`, `rule_based`).
+   - `model` (TEXT): Exact model name used (e.g., `llama3.2:3b`, `qwen/qwen3.8-27b`).
+   - `is_offline` (INTEGER DEFAULT 0): Binary flag indicating whether the message was processed offline (1) or online (0).
+   - `timestamp` (REAL NOT NULL): Epoch timestamp.
+   - `metadata` (TEXT): JSON-encoded message telemetry.
+   - Indices: `idx_msg_conv` ON `conversation_messages(conversation_id, timestamp ASC)`.
+
+---
+
+## CHAPTER 7: MULTI-CONVERSATION & PERSONAL CHAT MANAGEMENT SYSTEM
+
+### 7.1 Architecture of ConversationManager (`memory/conversation_manager.py`)
+The `ConversationManager` class encapsulates all multi-session and multi-person logic:
+- `create_conversation(title, person_name, system_prompt)`: Instantiates a new thread.
+- `get_or_create_person_chat(person_name)`: Looks up whether an existing thread exists for a specific person (case-insensitive match on `person_name`). If found, returns that conversation; if not found, automatically creates a dedicated thread titled `"[Person] Chat"` with an empathetic personalized system prompt.
+- `add_message(conv_id, role, content, provider, model, is_offline)`: Appends message to history and updates conversation's `updated_at` timestamp.
+- `get_messages(conv_id, limit)`: Returns chronological history for isolated context injection.
+- `rename_conversation(conv_id, new_title)`: Updates conversation title.
+- `delete_conversation(conv_id)`: Deletes conversation and automatically cascades deletion to all associated messages.
+- `search_messages(query, conv_id)`: Performs SQL `LIKE` search across message contents.
+
+### 7.2 Strict Chat History Isolation Guarantee
+To ensure privacy and contextual clarity:
+- Messages belonging to a person chat (such as Kannaya) are strictly scoped to `conv_0b7e3df21e43`.
+- When Iris thinks in another conversation (such as a Python programming chat or General Chat), only messages matching that active `conversation_id` are loaded into the LLM's context window.
+- Personal facts and private exchanges never leak across separate topic threads.
+
+### 7.3 REST Endpoints for Chat & Model Routing
+Integrated directly into `backend/server/api.py`:
+- `POST /chat`: Accepts `ChatRequest` containing `message`, `voice`, `conversation_id`, and `person_name`. Returns `ChatResponse` with `response`, `provider`, `model`, `is_offline`, and `conversation_id`.
+- `GET /model/status`: Returns current connectivity (`online`/`offline`), active provider, active model, and list of installed Ollama models.
+- `POST /model/select`: Switches routing mode (`auto`, `offline_only`, `online_only`) or locks preferred models.
+- `GET /model/ollama/models`: Returns list of locally installed Ollama models.
+- `GET /conversations`: Lists conversations ordered by latest activity with message counts and last message previews.
+- `POST /conversations`: Creates a new general topic conversation.
+- `GET /conversations/{id}`: Fetches conversation details and message history.
+- `PUT /conversations/{id}`: Renames a conversation.
+- `DELETE /conversations/{id}`: Deletes a conversation and its messages.
+- `POST /conversations/person/{person_name}`: Creates or opens a dedicated person chat.
+
+---
+
+## CHAPTER 8: HANDS AUTOMATION, APPLICATION LAUNCHING & SMART CONTROLLERS
+
+### 8.1 Hands Execution Architecture (`hands/`)
+The "Hands" subsystem gives Iris physical command of the Windows operating system:
+- `AppLauncher` (`hands/app_launcher.py`): Scans Windows registry, Start Menu shortcuts, and PATH to launch installed applications (Chrome, VS Code, Spotify, Notepad, Calculator, Terminal, etc.) via `subprocess.Popen`.
+- `TypoCorrector` (`core/typo_corrector.py`): Employs rapid Levenshtein distance and phonetic matching to correct misspelled voice or typed commands before execution (e.g., "opn chrom" -> "open chrome", "whatapp" -> "whatsapp").
+- `SystemControl` (`hands/system_control.py`): Controls Windows master volume, screen brightness, lock workstation (`rundll32.exe user32.dll,LockWorkStation`), minimize all windows (`Shell.Application.MinimizeAll`), sleep, and shutdown.
+- `TerminalExecutor` (`hands/terminal.py`): Executes administrative PowerShell and CMD commands with timeout controls and stdout capture.
+
+### 8.2 WhatsApp Controller (`hands/whatsapp_controller.py`)
+- Purpose: Automates WhatsApp messaging natively or via WhatsApp Web/Desktop.
+- Capabilities: Locates contacts by name, prepares typed messages, executes dispatch, and verifies contact selection. Tested and verified via `scratch/test_select_contact.py`.
+
+### 8.3 YouTube Controller (`hands/youtube_controller.py`)
+- Purpose: Media playback and searching.
+- Capabilities: Opens YouTube searches, initiates video playback, controls pause/play, volume adjustment, and full-screen toggling.
+
+### 8.4 TodoManager & TodoScheduler
+- Purpose: Manages Layer 2 memory tasks and reminders.
+- Operation: `TodoScheduler` runs a background timer thread checking pending tasks against system time, triggering spoken alarm announcements through `VoiceEngine`.
+
+---
+
+## CHAPTER 9: VISION SYSTEM, OCR & BIOMETRIC PRESENCE ENGINE
+
+### 9.1 Camera Presence & Emotion Engine (`vision/presence_emotion.py`)
+- Hardware Interface: Accesses local webcam via OpenCV (`cv2.VideoCapture(0)`).
+- Face Detection: Detects user face presence using Haar cascades / dlib facial landmark meshes.
+- Single-Owner Biometric Security Vault: Computes facial embeddings for "Commander". If an unauthorized individual sits in front of the terminal, Iris blocks system commands and issues a biometric warning.
+- Real-Time Emotion Classification: Categorizes facial expressions into 6 states: `happy`, `sad`, `neutral`, `angry`, `surprised`, `focused`, adapting Iris's conversational tone and ThinkingOrb glow accordingly.
+
+### 9.2 Screen Vision & OCR Engine (`vision/`)
+- Screenshot Capture (`vision/screenshot.py`): Captures full-resolution or multi-monitor Windows desktop frames via Pillow/Win32 APIs.
+- Frame Quality Sentinel: Classifies captured frames as `ok`, `blurry`, or `blank` (using Laplacian variance and Canny edge detection) before AI processing to prevent hallucinations on dark or covered screens.
+- OCR Engine (`vision/ocr.py`): Performs optical character recognition extracting textual content, error messages, and window text directly from user screens.
+- Multimodal Vision API (`/vision/see`): Dispatches frames to Gemini Flash (`gemini-2.5-flash`, `gemini-2.0-flash`) or OpenRouter to provide real-time screen commentary ("What's on my screen?").
+
+---
+
+## CHAPTER 10: IN-PROGRESS & HALF-COMPLETED IMPLEMENTATIONS
+
+The following components have been initiated and partially implemented in the codebase, but are not yet fully finalized:
+
+1. Local OpenCode CLI Autonomous Pipeline:
+   - Current State: `opencode` CLI version 1.19.0 is verified installed at `C:\Users\itsme\AppData\Roaming\npm\opencode.ps1`. Single-command execution tests pass.
+   - In-Progress Work: Autonomous multi-step coding loop where Iris automatically invokes OpenCode to inspect files, generate diffs, and run tests autonomously without manual user terminal intervention.
+2. Local Piper Neural TTS:
+   - Current State: Configured in `backend/voice_engine.py` as a secondary offline option.
+   - In-Progress Work: Compiling binary ONNX runtime voice models for Piper on Windows, while Windows SAPI5 / `pyttsx3` currently handles 100% of offline TTS.
+3. PyTorch Local Whisper STT:
+   - Current State: Code skeleton exists in `backend/stt.py` referencing `WhisperSTT(model_size="small")`.
+   - In-Progress Work: Currently raises `ModuleNotFoundError: No module named 'torch'`. Offline STT is fully handled by the Windows Native Dictation engine while local PyTorch wheels are pending setup.
+4. Semantic Vector Similarity Indexing across Conversations:
+   - Current State: SQLite `embeddings` table is created in `memory/db.py`.
+   - In-Progress Work: Generating local sentence embeddings to perform vector cosine similarity search across historical conversations (currently lexical SQL search is active).
+
+
+---
+
+## CHAPTER 11: FULL-DUPLEX WEBRTC, REAL-TIME AUDIO STREAMING & BARGE-IN ARCHITECTURE
+
+### 11.1 Full-Duplex Audio Transport & WebRTC/WebSocket Session (`backend/audio/full_duplex_session.py`)
+- Architecture: Upgraded IRIS from half-duplex turn-taking to continuous, simultaneous bidirectional audio transport.
+- Transport Protocol:
+  - WebRTC signaling endpoints: `POST /webrtc/offer`, `POST /webrtc/ice`, and `GET /webrtc/status` handle peer negotiation.
+  - Low-Latency Loopback WebSocket: `ws://127.0.0.1:5743/ws/audio` handles continuous 16kHz 16-bit mono PCM audio streaming with <5ms network latency, eliminating external C++ compilation dependencies on Windows.
+- Session Lifecycle:
+  - Each client connection initializes a unique `FullDuplexAudioSession` (`sess_<hex8>`).
+  - Incoming binary frames are processed through a real-time pipeline: Noise Suppression -> Silero VAD -> STT Utterance Accumulator.
+  - Audio responses are returned incrementally to the client as base64-encoded audio chunks for immediate playback while user microphone recording remains active.
+  - Connection state monitoring, periodic heartbeat ping/pong (every 15s), and clean disconnection handlers ensure zero resource leaks.
+
+### 11.2 Silero Voice Activity Detection (VAD) ONNX Runtime Engine (`backend/audio/silero_vad.py`)
+- Model Architecture: Official Silero VAD (v4/v5 ONNX model, 2.3 MB) located at `backend/models/silero_vad.onnx`.
+- Zero-PyTorch Execution: Direct CPU inference via `onnxruntime` (v1.30.0), completely eliminating multi-gigabyte PyTorch dependencies.
+- Technical Parameters:
+  - Input: 512-sample (32 milliseconds at 16,000 Hz) float32 PCM audio frames.
+  - Recurrent State: Maintains internal hidden state tensor `(2, 1, 128)` across contiguous frames to preserve acoustic context across phoneme transitions.
+  - Speech Probability Threshold: Configurable onset threshold (default: 0.55), exit threshold (0.35).
+  - Turn-Taking Parameters: `speech_pad_ms` (200ms) to avoid clipping words, and `min_silence_duration_ms` (600ms) to detect completed utterances.
+  - Inference Latency: **0.63 to 0.70 milliseconds** per 32ms frame on consumer CPU (<2.2% CPU utilization).
+  - REST Control: `GET /audio/vad/status` and `POST /audio/vad/config` for live parameter tuning.
+
+### 11.3 Real-Time Background Noise Suppression (`backend/audio/noise_suppressor.py`)
+- Signal Processing Engine: Implemented natively in Python using `scipy.signal` and `numpy` for zero-lag streaming audio cleanup.
+- Mathematical Technique: Hanning-windowed STFT (Short-Time Fourier Transform) with half-overlap, dynamic noise spectrum estimation during non-speech frames, and Wiener gain filtering with spectral subtraction.
+- Floor Clamping: Enforces a minimum spectral floor parameter (`spectral_floor`, 0.05 to 0.20) to prevent acoustic 'musical noise' artifacts and avoid canceling quiet user speech.
+- Performance & Attenuation:
+  - Stationary Noise Attenuation: **32.7x reduction** in noise power on steady ambient hums (fans, AC, computer hardware).
+  - Processing Latency: **0.29 to 0.76 milliseconds** per frame.
+  - Configurable Levels: `off` (passthrough), `low` (gentle 6dB reduction), `moderate` (15dB fan/AC cleanup - default), `high` (aggressive 24dB suppression).
+  - Runtime API: `GET /audio/noise-suppression/status` and `POST /audio/noise-suppression/config`.
+
+### 11.4 Real-Time Barge-In & Instant Response Cancellation (`backend/engine/barge_in_manager.py`)
+- Requirement: Speech detection during assistant playback must immediately halt audio (<100ms) and cancel background LLM/TTS generation tasks.
+- Architecture:
+  - Central Coordinator: `BargeInManager` acts as the system-wide source of truth for response validity.
+  - Generation Tracking: Every assistant utterance receives a unique `generation_id` (`gen_<hex8>`).
+  - Atomic Invalidation: When user speech is detected during assistant playback or when a barge-in event is triggered, `barge_in_mgr.trigger_barge_in()` marks the active generation ID as cancelled, invalidates pending audio chunks, and notifies registered cancellation callbacks.
+  - Subprocess Terminating: `JarvisVoice.stop()` calls `proc.kill()` on active `ffplay` instances and issues `winsound.PlaySound(None, winsound.SND_PURGE)` to clear Windows audio buffers.
+  - Measured Cancellation Latency: **1.74 to 2.74 milliseconds** (far exceeding the 100ms threshold).
+  - Re-triggering Immunity: If speech during playback was merely an interjection or short noise below 200ms, barge-in debounce logic prevents looping false cancellations.
+
+### 11.5 Low-Latency Token Streaming & Incremental Clause/Sentence TTS (`backend/engine/streaming_orchestrator.py`)
+- Real-Time Token Generation:
+  - `HybridModelRouter.chat_stream()` yields incremental text tokens from Groq (`qwen/qwen3.8-27b`), OpenAI, or local Ollama (`llama3.2:3b`).
+- Clause & Sentence Boundary Buffering:
+  - Instead of waiting for the full LLM response to complete before synthesizing audio (which causes 4 to 8 second delays), `StreamingOrchestrator` buffers incoming tokens and splits at natural grammatical boundaries (`.`, `!`, `?`, `,`, `;`, `
+`).
+  - Completed clauses are immediately enqueued onto a concurrent background worker that begins speech synthesis while the LLM continues generating subsequent words.
+- Telemetry Metrics Measured:
+  - Time-To-First-Token (TTFT): ~150-300ms on Groq, ~4.8s on local Ollama 3B model.
+  - Time-To-First-Audio (TTFA): Measured from prompt submission to first playable audio chunk delivery.
+  - Mid-Stream Cancellation: If barge-in triggers midway through generation, the streaming loop breaks immediately, draining queues and discarding pending synthesis jobs.
+- Streaming Endpoint: `POST /chat/stream` dispatches Server-Sent Events (SSE) carrying `token`, `clause_audio`, and `done` payloads.
+
+### 11.6 Desktop Overlay Full-Duplex Client & HUD Diagnostics (`desktop_overlay/main_window.html`)
+- Web Audio Pipeline:
+  - HTML5 `navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false } })`.
+  - `AudioContext` with `ScriptProcessorNode` (buffer size 4096) captures raw microphone samples, converts to 16,000 Hz 16-bit mono PCM, and streams binary packets over WebSocket `ws://127.0.0.1:5743/ws/audio`.
+- Audio Playback Queue:
+  - Seamless chunked audio playback using HTML5 `Audio()` objects loaded with base64 data URLs (`data:audio/wav;base64,...`).
+  - Next chunk pre-buffering ensures gapless playback without stutter or clipping.
+- Real-Time HUD Badges:
+  - `⚡ DUPLEX`: Shows full-duplex WebSocket connection state (green = connected, yellow = reconnecting).
+  - `🎙️ VAD: SILENCE / SPEECH`: Live indicator reflecting backend Silero VAD state with speech probability percentage.
+  - `🔇 NR: MODERATE`: Displays active noise reduction filter level.
+  - `⚡ TTFT / TTFA`: Real-time diagnostic readouts of first-token and first-audio latencies.
+- Client-Side Barge-In:
+  - When the user starts speaking while assistant audio is playing, the frontend immediately pauses active audio elements, flushes the playback queue, and sends a `{"type": "barge_in"}` packet to the backend.
+
+
+---
+
+## 12. Multilingual Comprehension & Musical Sing-Along Intelligence
+
+### 12.1 Omnilingual Comprehension & English Formulation Directive
+- The core cognitive brain and model router have been upgraded to understand input in every human language and regional dialect:
+  - Supports Hindi, Telugu, Tamil, Punjabi, Urdu, Spanish, French, German, Japanese, Chinese, Hinglish, and more.
+  - Removes rigid language pinning in speech transcription, allowing Groq Whisper (`whisper-large-v3`) to perform automatic cross-language speech recognition.
+  - Enforces a strict system prompt directive: IRIS comprehends the full emotional and linguistic nuance of the foreign input, but always reasons, formulates, and delivers its voice and text response in natural, fluent English (unless explicitly instructed by the user to speak in another language).
+
+### 12.2 Music, Song & Lyric Perception Engine (`backend/intelligence/music_engine.py`)
+- Dedicated intelligence subsystem specialized in recognizing music, spoken lyrics, hummed melodies, and vocal singing.
+- Hybrid Two-Tier Perception:
+  - Tier 1: Instant local catalog matcher executing high-performance regular expressions for iconic national and global hits across Hindi, Telugu, English, and Spanish in under one millisecond.
+  - Tier 2: Deep LLM lyric extraction leveraging Groq and open language models to parse unknown or obscure song lyrics into structured metadata (song title, primary artist, composer, movie or album, original language, continuation lyrics, and cultural backstory).
+
+### 12.3 Contextual Music Working Memory & Anaphoric Resolution
+- Active Working Memory Window:
+  - Automatically caches the most recently identified or discussed musical track with a five-minute time-to-live expiration.
+- "Play It" Anaphoric Resolution:
+  - Solves the natural speech problem where a user sings or discusses lyrics and subsequently issues a brief command such as "play it", "play this", or "just play the song".
+  - Rather than falling back to generic top hits, the Decider, YouTube Controller, and Brain inspect the Music Engine's active working memory and automatically translate the pronoun into the exact song title and singer.
+
+### 12.4 Musical Companion Dialogue & Sing-Along Interaction
+- Interactive Companionship:
+  - When the user quotes or sings lyrics, IRIS does not deliver dry technical search results. Instead, it acts as an enthusiastic musical companion.
+  - Acknowledges the track, provides a short backstory or interesting fact about the movie or artist, and harmonizes with the user by reciting or singing the next one or two lines of the lyrics.
+  - Concludes by proactively asking if the user would like the original track played on YouTube.
+
+### 12.5 Direct YouTube Playback Integration
+- When the user instructs IRIS to play the track, the task execution layer dispatches the command to the YouTube automation controller.
+- The controller safely encodes the precise title and artist query, navigates to YouTube, and triggers instant playback in the background or active browser without interrupting the conversation state.
+
+
+---
+
+## 13. Universal Broadcast Messaging & Visual Studio Code Execution
+
+### 13.1 Universal & Multi-Recipient Messaging Engine (`hands/whatsapp_controller.py`, `hands/social_controller.py`)
+- Upgraded communication controllers to support broadcasting to everyone as well as sending messages to multiple designated recipients:
+  - Supports natural voice and text commands such as "send message to everyone saying...", "tell everyone that...", "message all contacts...", or "send message to mom, dad and brother saying...".
+  - Recognizes synonyms for universal broadcast including "everyone", "every one", "everybody", "all contacts", "all chats", "all friends", and "broadcast".
+  - Decider subsystem parses both single recipients, lists of contacts separated by commas or conjunctions, and broadcast directives with zero manual punctuation required.
+
+### 13.2 Broadcast to Everyone & Active Contact Distribution
+- Dual-Tier Universal Messaging:
+  - Local Contact Book Integration: Checks for structured contact directories or saved groups in data storage. If custom contacts exist, sequentially dispatches the message to all saved recipients.
+  - Desktop Client Automation: If no contact list is configured, brings the active WhatsApp window to the foreground, opens the recent conversation list, and delivers the message to the top active contacts.
+  - Automatic Clipboard Staging: Copies the message to the Windows clipboard simultaneously so the user can paste it into any broadcast list or status channel with a single keypress.
+
+### 13.3 Sequential Multi-Contact Messaging
+- Multi-Recipient Parsing:
+  - When the user specifies multiple names (such as "send message to Alice, Bob and Charlie saying meeting started"), the controller breaks down the recipient list into individual targets.
+  - Automatically searches each contact, loads the conversation thread, pastes the message, and presses Enter, applying brief pauses between sends to comply with natural desktop interaction timing.
+
+### 13.4 Visual Studio Code Program Runner (`hands/system_control.py`, `hands/task_executor.py`)
+- Dedicated In-Editor Execution System:
+  - Implements the new intent and action `run_in_code_editor` triggered by phrases such as "run and execute the program in vs code", "run the program in vs code", "execute code in vs code", or "run python file in vs code".
+  - Automatic File Resolution: Determines the target file to execute. If the user mentions a specific file name, it locates it. If the user says "the program" or "this code", it automatically identifies the most recently edited code file across the active workspace, project folder, or Desktop.
+  - Window Activation & Focus: Launches or restores the Visual Studio Code desktop window and forcefully brings it to the active input foreground using Windows desktop attachment APIs.
+
+### 13.5 Integrated Terminal Automation & Keystroke Triggering
+- Visual In-Editor Execution:
+  - Focuses the editor window and sends the official VS Code integrated terminal shortcut (Control plus backtick) to toggle or focus the embedded terminal.
+  - Automatically detects the programming language runtime (Python, Node.js, PowerShell, or Batch script) and types the exact run command into the integrated terminal, then presses Enter.
+  - Simultaneously sends the standard run shortcut (Control plus F5) to activate the editor's native debugger and runner extensions.
+
+### 13.6 Automated Program Output Capture & Companion Reporting
+- Dual-Layer Execution Feedback:
+  - While the script is visibly running inside VS Code's editor terminal on screen, the system concurrently executes the process in the background with a safety timeout to capture standard output, standard error, and process return codes.
+  - The cognitive brain formats the resulting execution output and reports it back to the user via voice and chat response (e.g. "Executed program in VS Code terminal. Output: ...").
+
+
+---
+
+## 14. Guarded Confirmation Pipeline & Approval Protocol
+
+### 14.1 Guarded Actions Requiring User Confirmation
+- To protect system integrity and prevent unintentional desktop destruction, potentially disruptive operations are automatically intercepted by the Decider subsystem:
+  - System power operations: Workstation shutdown, system restart, or rebooting.
+  - File deletions: Permanently removing directories, deleting files, or wiping storage.
+  - Critical messaging and automation tasks flagged as requiring explicit consent.
+- When an intercepted action is encountered, the cognitive engine halts immediate execution, preserves the concrete task execution plan in pending memory with a five-minute expiration window, and requests explicit user permission (e.g. "That requires your confirmation — say 'yes' or 'approve' to proceed.").
+
+### 14.2 Broad Approval Expression Perception
+- Natural Confirmation Recognition:
+  - Supports a wide spectrum of natural approval expressions, including "yes", "yeah", "yep", "sure", "confirm", "approve", "approved", "approve it", "i approve", "do it", "yes do it", "ok", "okay", "proceed", "go ahead", and the thumbs-up emoji ("👍").
+  - Fast-path confirmation filtering prevents acknowledgment words from being misinterpreted as generic greetings when a confirmation request is actively pending.
+
+### 14.3 "👍 Ok" Pre-Execution Acknowledgment Protocol
+- Execution Protocol Upon Approval:
+  - The moment the user grants approval, IRIS immediately executes the queued plan through its task automation hands.
+  - Formulates both its spoken voice synthesis and user interface text response with the mandatory affirmative prefix: "👍 Ok" (e.g. "👍 Ok. Shutting down workstation.", "👍 Ok. File deleted.", "👍 Ok. Done.").
+  - Guarantees that the user receives an instantaneous visual and auditory confirmation that their approval was honored and the task is underway.
+
+### 14.4 Rejection and Cancellation Safety
+- Safe Abort Handling:
+  - If the user responds with negative or abortive commands (such as "no", "cancel", "stop", "abort", or "don't"), the queued action is purged immediately from pending memory without execution.
+  - IRIS confirms cancellation cleanly ("Cancelled. Action was not performed.") without emitting the affirmative "👍 Ok" prefix.
+
+
+---
+
+## 15. Web Platform Architecture & Dashboard Customization
+
+### 15.1 Resilient User Registration & Onboarding Pipeline
+- Enhanced Onboarding Form Architecture:
+  - Upgraded the multi-step registration workflow with immediate step-by-step client validation across name, email structure, and credential length requirements.
+  - Hardened numerical parameter parsing so unentered optional profile attributes gracefully serialize without triggering invalid numeric exceptions.
+  - Decoupled primary account creation from secondary profile metadata updates, guaranteeing that transient connection delays do not strand newly registered users.
+  - Integrated descriptive inline alert banners that guide users directly on the active step rather than silently suppressing navigation.
+
+### 15.2 Universal Responsive Navigation & Mobile Interaction
+- Adaptive Shell and Navigation Architecture:
+  - Refactored the global landing navigation bar with a passive scroll listener and dynamic backdrop blur transitions.
+  - Implemented an accessible mobile drawer toggle with clear hamburger and dismiss states, granting handheld devices and tablets full touch navigation to features, pricing tiers, and authentication workflows.
+  - Preserved fluid desktop aesthetics while ensuring high touch-target compliance on small screens.
+
+### 15.3 Interactive Visual Theme Representation System
+- Six-Theme Visual Customization Engine:
+  - Embedded a dedicated theme selection panel providing full interactive controls for all six supported visual presentation models:
+    - Liquid Blob: Reactive fluid orb with pulsing organic energy aura.
+    - Cyber Terminal: Retro-futuristic phosphor green HUD with scanlines and monospaced telemetry.
+    - Voice Spectrum: Dynamic multi-channel audio equalizer bars responding to speech frequency.
+    - Drum Waves: Concentric sonic ripples vibrating with acoustic voice cadence.
+    - Hologram Orb: Three-dimensional geometric holographic wireframe with gyro rotation.
+    - Minimal Dot: Ultra-clean ambient breathing indicator for zero-distraction focus.
+  - Equipped each theme option with a live visual simulation tile, selection badges, and automatic background persistence to the user profile repository.
+
+### 15.4 Autonomous AI Skill Module Toggles
+- Dynamic Capability Management Interface:
+  - Introduced an intuitive skill management dashboard featuring accessible switch toggles for key platform subsystems.
+  - Covers system and desktop automation, full-duplex voice activity and barge-in listeners, integrated code editor execution, multilingual lyrics perception, universal multi-contact messaging, and media playback controllers.
+  - Added global batch controls allowing instant enablement or disabling of all modules, accompanied by local persistence and immediate visual status confirmations.
+
+### 15.5 Dashboard Engine Health & Quick Launch Portal
+- Real-Time Local Engine Monitoring:
+  - Integrated interactive engine status polling with one-click refresh triggers, enabling users to verify local service readiness without reloading the web application.
+  - Hardened memory telemetry rendering against missing attributes across short-term, long-term, and deep memory stores.
+  - Added streamlined launch tiles providing direct navigation to real-time chat, visual theme customization, and autonomous skill controls.
+
+
+---
+
+## 16. Relational Persistence & Secure Authentication Architecture
+
+### 16.1 Local Relational Database Pipeline & Connection Sanitization
+- Local PostgreSQL 18 Engine Integration:
+  - Configured persistent relational database storage targeting the local database repository (`iris_db`) running on standard workstation port fifty-four thirty-two.
+  - Diagnosed and resolved the network address resolution exception (`getaddrinfo failed`). The fault originated from reserved symbol ambiguity when database credentials contain separator characters, resulting in malformed host parsing.
+  - Implemented automatic connection string sanitization in the application settings configuration layer. The pipeline automatically ensures that reserved credential characters are URL-encoded before establishing the asynchronous database connection pool, preventing connection failures regardless of raw user input format.
+  - Standardized local loopback resolution to explicit numeric IPv4 addressing to bypass Windows IPv6 resolution latency.
+
+### 16.2 Modern Cryptographic Password Security
+- Native Cryptographic Hashing Migration:
+  - Replaced legacy hashing context wrappers with direct, modern bcrypt cryptographic processing.
+  - Solved upstream library incompatibilities on modern Python environments where internal bug-detection routines overflowed maximum byte lengths.
+  - Implemented boundary-safe string encoding enforcing proper byte limitations while preserving full entropy, guaranteeing rapid and deterministic authentication checks during registration and sign-in.
+
+### 16.3 Relational Schema Initialization & Default Entitlements
+- Automatic Relational Schema Provisioning:
+  - Bootstrapped and verified all primary database entities within PostgreSQL: users, subscriptions, clones, and payment transaction logs.
+  - Enforced transactional atomicity during user onboarding: account creation simultaneously provisions the primary identity record and registers a default active Free subscription tier in a single commit boundary.
+  - Guarded against duplicate email registrations with clear and structured client feedback.
+
+### 16.4 Subscription Elevation Security & Payment Guardrails
+- Protected Entitlement Architecture:
+  - Closed placeholder elevation loopholes that previously allowed paid tiers (such as Student Pro and Lifetime) to be activated through unverified direct client requests.
+  - Restricted paid tier transitions strictly to verified payment confirmation webhooks from registered payment providers.
+  - Preserved standard Free tier selection while guaranteeing that paid capabilities require confirmed billing events.

@@ -1,0 +1,43 @@
+{
+  "user_role": "developer",
+  "active_workspace": "developer",
+  "workspaces": {
+    "default": [
+      "code",
+      "chrome",
+      "terminal"
+    ],
+    "developer": [
+      "code",
+      "chrome",
+      "terminal"
+    ],
+    "dev": [
+      "code",
+      "chrome",
+      "terminal"
+    ],
+    "coding": [
+      "code",
+      "chrome",
+      "terminal"
+    ],
+    "work": [
+      "code",
+      "chrome",
+      "terminal"
+    ],
+    "web": [
+      "chrome",
+      "terminal"
+    ]
+  },
+  "app_display_names": {
+    "code": "VS Code",
+    "chrome": "Google Chrome",
+    "terminal": "Windows Terminal",
+    "notepad": "Notepad",
+    "calc": "Calculator"
+  },
+  "history": []
+}

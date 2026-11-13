@@ -1,0 +1,11 @@
+{
+  "name": "iris-ai",
+  "private": true,
+  "workspaces": ["website"],
+  "scripts": {
+    "dev": "npm run dev --workspace=website",
+    "build": "npm run build --workspace=website",
+    "dev:engine": "python runtime/bootstrap.py",
+    "dev:api": "python -m uvicorn backend.main:app --reload --port 8001"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "model_name": "jarvis-ai-v1",
+  "base_model": "llama3.2",
+  "output_dir": "./training_output/jarvis-v1",
+  "dataset_path": "./training/dataset/conversations.json",
+  "epochs": 3,
+  "batch_size": 4,
+  "learning_rate": 2e-5,
+  "max_seq_length": 2048,
+  "warmup_steps": 100,
+  "logging_steps": 10,
+  "save_steps": 500,
+  "use_lora": true,
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "lora_dropout": 0.05,
+  "description": "Base fine-tuning config for Jarvis AI personality and conversation style"
+}

@@ -1,0 +1,40 @@
+# System Settings
+version: "1.0.0"
+
+# Server
+server:
+  host: "0.0.0.0"
+  port: 5744
+  websocket_enabled: true
+
+# Memory
+memory:
+  type: "file"           # file, vector, hybrid
+  max_episodic: 100      # recent conversations to keep
+  auto_save_interval: 30 # seconds
+
+# Voice
+voice:
+  enabled: true
+  cache_dir: "~/.iris/voice_cache"
+  default_preset: "andrew"
+
+# Vision
+vision:
+  enabled: true
+  screenshot_dir: "~/.iris/screenshots"
+
+# Automation
+automation:
+  safe_mode: true
+  confirm_destructive: true
+
+# Privacy
+privacy:
+  level: "local_only"    # local_only, session_only, persistent, cloud_sync
+  encryption: false
+
+# Logging
+logging:
+  level: "info"          # debug, info, warning, error
+  file: "~/.iris/logs/iris.log"

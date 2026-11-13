@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iris Thinking Orb</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    background-color: transparent !important;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #orb-container {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    cursor: pointer;
+    background: transparent !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  #orb-container:hover {
+    transform: scale(1.08);
+  }
+
+  #orb-container:active {
+    transform: scale(0.94);
+  }
+
+  canvas {
+    display: block;
+    width: 76px;
+    height: 76px;
+    background: transparent !important;
+  }
+</style>
+</head>
+<body>
+
+<div id="orb-container" title="Iris AI • Click to Toggle">
+  <canvas id="orb-canvas" width="152" height="152"></canvas>
+</div>
+
+<script>
+  // ==========================================
+  // THINKING ORB ENGINE (Jakub Antalik / HorizonX)
+  // Zero external runtime dependencies.
+  // ==========================================
+
+  const API_BASE = "http://127.0.0.1:5743";
+  const canvas = document.getElementById('orb-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const size = 76;
+
+  canvas.width = Math.round(size * dpr);
+  canvas.height = Math.round(size * dpr);
+  ctx.scale(dpr, dpr);
+
+  let currentState = "composing"; // composing (idle), listening (wave), solving (rubik), working (orbits), breathing (ring)
+  let speedMult = 1.0;
+  let isPaused = false;
+
+  // Primitives
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function frac(x) { return x - Math.floor(x); }
+  function hashD(a, b) {
+    const h = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+    return h - Math.floor(h);
+  }
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    let fx = x - xi, fy = y - yi;
+    fx = fx * fx * (3 - 2 * fx);
+    fy = fy * fy * (3 - 2 * fy);
+    const a = hashD(xi, yi), b = hashD(xi + 1, yi), c = hashD(xi, yi + 1), d = hashD(xi + 1, yi + 1);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+  function fibDir(i, n) {
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    const y = 1 - (2 * (i + 0.5)) / n;
+    const rad = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = i * golden;
+    return [rad * Math.cos(theta), y, rad * Math.sin(theta)];
+  }
+  function makeProj(yaw, tilt, cx, cy, scale) {
+    const sinT = Math.sin(tilt), cosT = Math.cos(tilt);
+    const sinY = Math.sin(yaw), cosY = Math.cos(yaw);
+    return (x, y, z) => {
+      const x1 = x * cosY + z * sinY;
+      const z1 = -x * sinY + z * cosY;
+      const y2 = y * cosT - z1 * sinT;
+      const z2 = y * sinT + z1 * cosT;
+      return [cx + x1 * scale, cy - y2 * scale, z2];
+    };
+  }
+  function radiusScale(s, pow) {
+    return Math.pow(s / 300, pow);
+  }
+  function finalizeFrame(dots, lines, rMin = 0.3) {
+    const validDots = [];
+    for (const d of dots) {
+      if ((d.a ?? 1) < 0.02) continue;
+      d.r = Math.max(rMin, d.r);
+      validDots.push(d);
+    }
+    validDots.sort((a, b) => a.z - b.z);
+    return { dots: validDots, lines: (lines || []).filter(l => (l.a ?? 1) >= 0.02) };
+  }
+
+  // --- 1. COMPOSING ORB (Ribbon: rippling multi-lane ribbon over a sphere) ---
+  function frameRibbon(s, t, o = {}) {
+    const cx = s / 2, cy = s / 2;
+    const R = (s / 2) * 0.78;
+    const spin = o.spin ?? 0;
+    const camTilt = 0.3;
+    const pt = makeProj(t * 0.1 * spin, camTilt, cx, cy, 1);
+    const rs = radiusScale(s, o.rsPow ?? 0.6);
+
+    const dots = [];
+    const ghostN = o.ghostN ?? 80;
+    for (let i = 0; i < ghostN; i++) {
+      const d = fibDir(i, ghostN);
+      const [px, py, pz] = pt(d[0] * R, d[1] * R, d[2] * R);
+      const depth = (pz / R + 1) / 2;
+      dots.push({ x: px, y: py, z: pz, r: 0.8 * rs, white: 0.78, a: 0.08 + 0.2 * depth });
+    }
+
+    const ya = t * 0.24 * spin;
+    const ta = o.faceOn ? -camTilt : 0.55 + 0.3 * Math.sin(t * 0.18) * spin;
+    const ux = Math.cos(ya), uy = 0, uz = Math.sin(ya);
+    const vx = -uz * Math.sin(ta), vy = Math.cos(ta), vz = ux * Math.sin(ta);
+    const wx = uy * vz - uz * vy;
+    const wy = uz * vx - ux * vz;
+    const wz = ux * vy - uy * vx;
+
+    const wobMul = 0.23 * (o.wobMul ?? 1);
+    const sphereR = o.faceOn ? R / (1 + 0.85 * wobMul) : R;
+    const lanes = o.lanes ?? 5;
+    const segs = o.segs ?? 72;
+    const numLanes = Math.max(1, Math.round(lanes * (o.bandMul ?? 3.9)));
+
+    for (let l = 0; l < numLanes; l++) {
+      const laneOffset = (l - (numLanes - 1) / 2) * 0.075;
+      const laneRel = Math.abs(l - (numLanes - 1) / 2) / Math.max(1, (numLanes - 1) / 2);
+
+      for (let i = 0; i < segs; i++) {
+        const theta = (i / segs) * 2 * Math.PI;
+        const wave = (0.16 * Math.sin(theta * 3 - t * 1.7 + l * 0.22) + 0.07 * Math.sin(theta * 5 + t * 1.1)) * (o.wobMul ?? 1);
+        const radScale = o.faceOn ? 1 + wave : 1;
+        const offVal = o.faceOn ? laneOffset : laneOffset + wave;
+
+        const q = ux * Math.cos(theta) + vx * Math.sin(theta) + wx * offVal;
+        const F = uy * Math.cos(theta) + vy * Math.sin(theta) + wy * offVal;
+        const j = uz * Math.cos(theta) + vz * Math.sin(theta) + wz * offVal;
+        const len = Math.sqrt(q * q + F * F + j * j);
+        const curR = sphereR * radScale;
+
+        const [px, py, pz] = pt((q / len) * curR, (F / len) * curR, (j / len) * curR);
+        const depth = (pz / R + 1) / 2;
+
+        dots.push({
+          x: px,
+          y: py,
+          z: pz,
+          r: ((o.rBase ?? 1.1) + (o.rDepth ?? 1.7) * depth) * (1 - 0.25 * laneRel) * rs,
+          white: 0.52 - 0.44 * depth + 0.18 * laneRel,
+          a: 0.4 + 0.6 * depth
+        });
+      }
+    }
+
+    return finalizeFrame(dots, [], o.rMin ?? 0.3);
+  }
+
+  // --- 2. LISTENING ORB (Wave: latitude rings breathing on detuned sines) ---
+  function frameWave(s, t, o = {}) {
+    const cx = s / 2, cy = s / 2;
+    const R = (s / 2) * 0.85;
+    const pt = makeProj(t * 0.18, 0.38, cx, cy, 1);
+    const rs = radiusScale(s, o.rsPow ?? 0.6);
+    const dots = [];
+    const rings = o.rings ?? 13;
+    const lonDensity = o.lonDensity ?? 32;
+
+    for (let p = 0; p <= rings; p++) {
+      const lat = -Math.PI / 2 + (p / rings) * Math.PI;
+      const cosLat = Math.cos(lat), sinLat = Math.sin(lat);
+      const wave = 0.62 * Math.sin(t * 2.1 - p * 0.52) + 0.38 * Math.sin(t * 1.27 + p * 0.83);
+      const ringR = R * (0.88 + 0.105 * wave);
+      const numLon = Math.max(1, Math.round(Math.abs(cosLat) * lonDensity));
+
+      for (let y = 0; y < numLon; y++) {
+        const lon = (y / numLon) * 2 * Math.PI;
+        const [px, py, pz] = pt(cosLat * Math.cos(lon) * ringR, sinLat * ringR, cosLat * Math.sin(lon) * ringR);
+        const depth = (pz / R + 1) / 2;
+        const active = Math.max(0, wave);
+        dots.push({
+          x: px,
+          y: py,
+          z: pz,
+          r: ((o.rBase ?? 0.6) + (o.rDepth ?? 1.7) * depth) * (1 + 0.4 * active) * rs,
+          white: 0.66 - 0.56 * depth - 0.1 * active,
+          a: 0.35 + 0.65 * depth
+        });
+      }
+    }
+    return finalizeFrame(dots, [], o.rMin ?? 0.3);
+  }
+
+  // --- 3. WORKING ORB (Orbits: particles tracing orbital rings around ghosted sphere) ---
+  function frameOrbits(s, t, o = {}) {
+    const cx = s / 2, cy = s / 2;
+    const R = (s / 2) * 0.82;
+    const pt = makeProj(t * 0.12, 0.3, cx, cy, 1);
+    const rs = radiusScale(s, o.rsPow ?? 0.6);
+    const dots = [];
+    const orbitN = o.orbitN ?? 10;
+    const ghostN = o.ghostN ?? 32;
+    const particles = o.particles ?? 3;
+
+    for (let e = 0; e < orbitN; e++) {
+      const l = hashD(e, 1.7), rVal = hashD(e, 5.2), wVal = hashD(e, 8.9);
+      const curR = R * (0.45 + 0.52 * l);
+      const u = l * 2 * Math.PI;
+      const yAng = Math.acos(2 * rVal - 1);
+      const bx = Math.sin(yAng) * Math.cos(u), by = Math.cos(yAng), bz = Math.sin(yAng) * Math.sin(u);
+      let xx = -by, xy = bx;
+      const norm = Math.max(1e-6, Math.sqrt(xx * xx + xy * xy));
+      xx /= norm; xy /= norm;
+      const kx = by * 0 - bz * xy, ky = bz * xx - bx * 0, kz = bx * xy - by * xx;
+      const speed = (0.25 + 0.55 * wVal) * (wVal > 0.5 ? 1 : -1);
+
+      for (let B = 0; B < ghostN; B++) {
+        const theta = (B / ghostN) * 2 * Math.PI;
+        const [px, py, pz] = pt(
+          (xx * Math.cos(theta) + kx * Math.sin(theta)) * curR,
+          (xy * Math.cos(theta) + ky * Math.sin(theta)) * curR,
+          (0 * Math.cos(theta) + kz * Math.sin(theta)) * curR
+        );
+        const depth = (pz / curR + 1) / 2;
+        dots.push({
+          x: px, y: py, z: pz,
+          r: (o.ghostR ?? 0.9) * rs,
+          white: 0.72,
+          a: (o.ghostA ?? 0.45) * (0.4 + 0.6 * depth)
+        });
+      }
+
+      for (let B = 0; B < particles; B++) {
+        const theta = t * speed + (B / particles) * 2 * Math.PI + rVal * 6;
+        const [px, py, pz] = pt(
+          (xx * Math.cos(theta) + kx * Math.sin(theta)) * curR,
+          (xy * Math.cos(theta) + ky * Math.sin(theta)) * curR,
+          (0 * Math.cos(theta) + kz * Math.sin(theta)) * curR
+        );
+        const depth = (pz / curR + 1) / 2;
+        dots.push({
+          x: px, y: py, z: pz,
+          r: ((o.partR ?? 1.2) + (o.partRDepth ?? 1.6) * depth) * rs,
+          white: 0.3 - 0.22 * depth,
+          a: 0.6 + 0.4 * depth
+        });
+      }
+    }
+    return finalizeFrame(dots, [], o.rMin ?? 0.3);
+  }
+
+  // --- 4. SOLVING / THINKING ORB (Rubik / Slice Permutations) ---
+  function utMoves(n) {
+    const s = [];
+    for (let t = 0; t < n; t++) {
+      const axis = Math.min(2, Math.floor(hashD(t, 2.3) * 3));
+      const lo = -1 + 0.5 * Math.min(3, Math.floor(hashD(t, 5.9) * 4));
+      const ang = (hashD(t, 7.7) < 0.5 ? 1 : -1) * (Math.PI / 2);
+      s.push({ axis, lo, hi: lo + 0.5, ang });
+    }
+    return s;
+  }
+  const moveList = utMoves(14);
+  function ltMoves(t, s, d, pause) {
+    const cycle = 2 * s * d + pause, cur = t % cycle, amount = new Array(s).fill(0);
+    let active = -1;
+    if (cur < 2 * s * d) {
+      const h = Math.floor(cur / d), m = (cur - h * d) / d;
+      const p = 1 - Math.pow(1 - Math.min(1, m / 0.7), 3);
+      if (h < s) {
+        for (let i = 0; i < h; i++) amount[i] = 1;
+        amount[h] = p; active = h;
+      } else {
+        const e = 2 * s - 1 - h;
+        for (let i = 0; i < e; i++) amount[i] = 1;
+        amount[e] = 1 - p; active = e;
+      }
+    }
+    return { amount, active };
+  }
+  function ptRotate(p, moves, D) {
+    let [rx, ry, rz] = p, isActive = false;
+    for (let m = 0; m < moves.length; m++) {
+      if (D.amount[m] <= 0) continue;
+      const h = moves[m];
+      const val = h.axis === 0 ? rx : h.axis === 1 ? ry : rz;
+      if (val < h.lo || val >= h.hi) continue;
+      if (m === D.active) isActive = true;
+      const ang = h.ang * D.amount[m], cosA = Math.cos(ang), sinA = Math.sin(ang);
+      if (h.axis === 0) {
+        const ny = ry * cosA - rz * sinA;
+        rz = ry * sinA + rz * cosA; ry = ny;
+      } else if (h.axis === 1) {
+        const nx = rx * cosA + rz * sinA;
+        rz = -rx * sinA + rz * cosA; rx = nx;
+      } else {
+        const nx = rx * cosA - ry * sinA;
+        ry = rx * sinA + ry * cosA; rx = nx;
+      }
+    }
+    return [rx, ry, rz, isActive];
+  }
+  function frameRubik(s, t, o = {}) {
+    const cx = s / 2, cy = s / 2;
+    const R = (s / 2) * 0.82;
+    const pt = makeProj(t * 0.55, 0.35 + 0.1 * Math.sin(t * 0.9), cx, cy, R);
+    const rs = radiusScale(s, o.rsPow ?? 0.6);
+    const D = ltMoves(t, 14, 0.42, 1.2);
+    const dots = [];
+    const latRings = o.latRings ?? 13, lonDensity = o.lonDensity ?? 30;
+
+    for (let i = 0; i <= latRings; i++) {
+      const lat = -Math.PI / 2 + (i / latRings) * Math.PI;
+      const cosL = Math.cos(lat), sinL = Math.sin(lat);
+      const b = Math.max(1, Math.round(Math.abs(cosL) * lonDensity));
+      for (let j = 0; j < b; j++) {
+        const lon = (j / b) * 2 * Math.PI;
+        const [px, py, pz, act] = ptRotate([cosL * Math.cos(lon), sinL, cosL * Math.sin(lon)], moveList, D);
+        const [vx, vy, vz] = pt(px, py, pz);
+        const depth = (vz + 1) / 2;
+        dots.push({
+          x: vx, y: vy, z: vz,
+          r: ((o.rBase ?? 0.6) + (o.rDepth ?? 1.7) * depth + (act ? 0.3 : 0)) * rs,
+          white: 0.62 - 0.54 * depth - (act ? 0.14 : 0),
+          a: 0.4 + 0.6 * depth
+        });
+      }
+    }
+    return finalizeFrame(dots, [], o.rMin ?? 0.3);
+  }
+
+  // --- 5. CONNECTING / WEB ORB (Drifting node graph with proximity links & traveling signals) ---
+  function frameWeb(s, t, o = {}) {
+    const cx = s / 2, cy = s / 2;
+    const R = (s / 2) * 0.8;
+    const pt = makeProj(t * 0.12, 0.32, cx, cy, R);
+    const rs = radiusScale(s, o.rsPow ?? 0.6);
+    const h = o.nodeN ?? 24, thr = o.thr ?? 0.72;
+    const nodes = [];
+
+    for (let i = 0; i < h; i++) {
+      const u = fibDir(i, h);
+      const ny = u[0] + 0.3 * (vnoise(i * 0.31 + 9, t * 0.24) - 0.5) * 2;
+      const nb = u[1] + 0.3 * (vnoise(i * 0.53 + 27, t * 0.21) - 0.5) * 2;
+      const nf = u[2] + 0.3 * (vnoise(i * 0.77 + 55, t * 0.27) - 0.5) * 2;
+      const len = Math.sqrt(ny * ny + nb * nb + nf * nf);
+      nodes.push([ny / len, nb / len, nf / len]);
+    }
+
+    const lines = [], dots = [];
+    for (let i = 0; i < h; i++) {
+      for (let j = i + 1; j < h; j++) {
+        const dx = nodes[i][0] - nodes[j][0], dy = nodes[i][1] - nodes[j][1], dz = nodes[i][2] - nodes[j][2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist >= thr) continue;
+        const [x1, y1, z1] = pt(nodes[i][0], nodes[i][1], nodes[i][2]);
+        const [x2, y2, z2] = pt(nodes[j][0], nodes[j][1], nodes[j][2]);
+        const depth = ((z1 + z2) / 2 + 1) / 2;
+        lines.push({
+          x1, y1, x2, y2,
+          white: 0.42,
+          a: (1 - dist / thr) * (0.3 + 0.55 * depth),
+          w: Math.max(0.6, 0.8 * rs)
+        });
+      }
+    }
+
+    for (let i = 0; i < h; i++) {
+      const [vx, vy, vz] = pt(nodes[i][0], nodes[i][1], nodes[i][2]);
+      const depth = (vz + 1) / 2;
+      const pulse = 1 + 0.25 * Math.sin(t * 1.4 + i * 2.7);
+      dots.push({
+        x: vx, y: vy, z: vz,
+        r: (1.4 + 1.8 * depth) * pulse * rs,
+        white: 0.55 - 0.45 * depth,
+        a: 0.5 + 0.5 * depth
+      });
+    }
+
+    return finalizeFrame(dots, lines, o.rMin ?? 0.3);
+  }
+
+  // Painter with Palette & Transparent Alpha
+  function paintOrb(frame, state) {
+    ctx.clearRect(0, 0, size, size);
+
+    // Dynamic state palette
+    let baseColor = [224, 242, 254]; // Cyan / White default
+    if (state === "listening") {
+      baseColor = [52, 211, 153]; // Emerald
+    } else if (state === "solving" || state === "thinking") {
+      baseColor = [192, 132, 252]; // Purple
+    } else if (state === "speaking") {
+      baseColor = [56, 189, 248]; // Sky blue
+    } else if (state === "working") {
+      baseColor = [0, 240, 255]; // Electric cyan
+    }
+
+    // Lines first
+    if (frame.lines && frame.lines.length > 0) {
+      for (const line of frame.lines) {
+        const a = line.a ?? 1;
+        ctx.strokeStyle = `rgba(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]}, ${a * 0.7})`;
+        ctx.lineWidth = line.w || 0.8;
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.stroke();
+      }
+    }
+
+    // Dots z-sorted
+    for (const d of frame.dots) {
+      const a = d.a ?? 1;
+      const w = Math.min(1, Math.max(0, d.white));
+      // Mix base color with pure white for luminous core
+      const r = Math.round(lerp(baseColor[0], 255, 1 - w));
+      const g = Math.round(lerp(baseColor[1], 255, 1 - w));
+      const b = Math.round(lerp(baseColor[2], 255, 1 - w));
+
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Animation Loop
+  let startTime = performance.now();
+
+  function animate() {
+    if (!isPaused) {
+      const now = performance.now();
+      const elapsed = (now - startTime) / 1000;
+      let frame = null;
+
+      if (currentState === "composing") {
+        frame = frameRibbon(size, elapsed * 2.34 * speedMult, { spin: 0, bandMul: 3.9, wobMul: 1 });
+      } else if (currentState === "listening") {
+        frame = frameWave(size, elapsed * 3.8 * speedMult);
+      } else if (currentState === "solving" || currentState === "thinking") {
+        frame = frameRubik(size, elapsed * 1.82 * speedMult);
+      } else if (currentState === "working" || currentState === "speaking") {
+        frame = frameOrbits(size, elapsed * 2.2 * speedMult);
+      } else {
+        frame = frameRibbon(size, elapsed * 2.34 * speedMult, { spin: 0, bandMul: 3.9, wobMul: 1 });
+      }
+
+      if (frame) {
+        paintOrb(frame, currentState);
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  // Toggle Main Window on click
+  let startX = 0, startY = 0;
+  const container = document.getElementById('orb-container');
+
+  container.addEventListener('mousedown', (e) => {
+    startX = e.screenX;
+    startY = e.screenY;
+  });
+
+  container.addEventListener('mouseup', (e) => {
+    const dist = Math.hypot(e.screenX - startX, e.screenY - startY);
+    if (dist < 6) {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.toggle_main();
+      }
+    }
+  });
+
+  // State Sync with Backend
+  setInterval(async () => {
+    try {
+      let data = null;
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.get_status) {
+        data = await window.pywebview.api.get_status();
+      } else {
+        const res = await fetch(`${API_BASE}/status`);
+        data = await res.json();
+      }
+      if (data && data.speaking) {
+        currentState = "working"; // speaking active orbits
+      } else if (data && data.listening) {
+        currentState = "listening"; // wave
+      } else if (data && data.processing) {
+        currentState = "solving"; // thinking rubik
+      } else {
+        currentState = "composing"; // Demo OrbComposing ribbon
+      }
+    } catch (e) {
+      // Quiet when backend starting
+    }
+  }, 400);
+</script>
+</body>
+</html>

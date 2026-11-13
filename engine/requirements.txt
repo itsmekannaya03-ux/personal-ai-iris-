@@ -1,0 +1,14 @@
+ollama==0.3.0
+whisper==1.1.10
+pyautogui==0.9.54
+psutil==6.0.0
+pyttsx3==2.90
+SpeechRecognition==3.10.0
+fastapi==0.115.0
+uvicorn==0.30.0
+pydantic==2.9.0
+cryptography>=42.0.0
+
+# Optional: Requires C++ Build Tools on Windows (Python 3.13 wheels not yet available)
+# chromadb==0.5.0
+# sentence-transformers==3.0.0

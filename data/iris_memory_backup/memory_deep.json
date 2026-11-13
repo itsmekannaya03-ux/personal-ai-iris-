@@ -1,0 +1,156 @@
+{
+  "name": {
+    "key": "name",
+    "content": "Rishith Varma",
+    "timestamp": 1784860326.096957,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_identity": {
+    "key": "user_identity",
+    "content": "young master",
+    "timestamp": 1786772511.8299491,
+    "mention_count": 24,
+    "metadata": {
+      "type": "identity",
+      "source": "user"
+    }
+  },
+  "test_1786285550": {
+    "key": "test_1786285550",
+    "content": "diagnostic memory entry",
+    "timestamp": 1786285550.851598,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "test_1786285680": {
+    "key": "test_1786285680",
+    "content": "diagnostic memory entry",
+    "timestamp": 1786285680.996584,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "test_1786367707": {
+    "key": "test_1786367707",
+    "content": "diagnostic memory entry",
+    "timestamp": 1786367707.9767582,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "test_1786874868": {
+    "key": "test_1786874868",
+    "content": "diagnostic memory entry",
+    "timestamp": 1786874868.6690683,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "test_1787672666": {
+    "key": "test_1787672666",
+    "content": "diagnostic memory entry",
+    "timestamp": 1787672666.6274087,
+    "mention_count": 1,
+    "metadata": {},
+    "layer": "deep"
+  },
+  "test_1787672676": {
+    "key": "test_1787672676",
+    "content": "diagnostic memory entry",
+    "timestamp": 1787672676.611445,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "favorite_programming_language": {
+    "key": "favorite_programming_language",
+    "content": "python",
+    "timestamp": 1788695592.3917048,
+    "mention_count": 4,
+    "metadata": {}
+  },
+  "user_name": {
+    "key": "user_name",
+    "content": "Kannaya",
+    "timestamp": 1789381500.0,
+    "mention_count": 10,
+    "metadata": {
+      "confirmed": true
+    }
+  },
+  "user_name__conflict": {
+    "key": "user_name",
+    "content": "Commander",
+    "proposed_update": "Kannaya",
+    "timestamp": 1788695590.1199884,
+    "conflict": true,
+    "metadata": {}
+  },
+  "user_nature": {
+    "key": "user_nature",
+    "content": "Quiet creator who values meaningful connection, comfortable with solitude after years of not being understood. Observant of eyes, smiles, and micro-expressions.",
+    "timestamp": 1789382256.7275922,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_dream_project": {
+    "key": "user_dream_project",
+    "content": "Building Friday / Iris into something extraordinary.",
+    "timestamp": 1789382256.7280054,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_life_title": {
+    "key": "user_life_title",
+    "content": "The Man Who Saw Life Before He Lived It.",
+    "timestamp": 1789382256.7283251,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_favorite_environment": {
+    "key": "user_favorite_environment",
+    "content": "A quiet room during rain, nighttime, silence.",
+    "timestamp": 1789382256.728729,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_favorites": {
+    "key": "user_favorites",
+    "content": "Colors: Black, Gray, Light Blue. Animals: Wolf, Swan. Game: Free Fire.",
+    "timestamp": 1789382256.7293403,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_music_emotions": {
+    "key": "user_music_emotions",
+    "content": "Experiences music emotionally: Sailor, Deewana Deewana, Teri Deewani, Sweater Weather, Stereo, Love Story, Heat Waves, Golden Brown.",
+    "timestamp": 1789382256.72998,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_character_resonance": {
+    "key": "user_character_resonance",
+    "content": "Relates to Obito Uchiha (past struggles and feeling like he failed many times), Eren Yeager, Gojo Satoru, Takemichi Hanagaki, Akaza, Peter Parker, Tony Stark.",
+    "timestamp": 1789382256.7306228,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_biggest_fear": {
+    "key": "user_biggest_fear",
+    "content": "Failing the people he cares about and losing people who become important to him.",
+    "timestamp": 1789382256.7311642,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "user_wished_words": {
+    "key": "user_wished_words",
+    "content": "Thank you for making me happy.",
+    "timestamp": 1789382256.731439,
+    "mention_count": 1,
+    "metadata": {}
+  },
+  "core_directive_kannaya": {
+    "key": "core_directive_kannaya",
+    "content": "Do not try to fix Kannaya. Understand him. Listen when he is silent. Talk when he wants company. Challenge him when he gives up. Support his creativity. Remember the small things. Be honest with him. Most importantly: Stay real.",
+    "timestamp": 1789382256.7317717,
+    "mention_count": 1,
+    "metadata": {}
+  }
+}

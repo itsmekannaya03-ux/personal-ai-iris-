@@ -1,0 +1,43 @@
+# IRIS AI - Master Core Python Dependencies
+# Generated for clean deployment and portable transfer to any PC
+
+# Web API & Server
+fastapi>=0.115.0
+uvicorn>=0.30.0
+websockets>=13.0
+requests>=2.32.0
+aiohttp>=3.10.0
+python-dotenv>=1.0.1
+pydantic>=2.8.0
+python-multipart>=0.0.9
+
+# Vision, Camera & Biometrics (SFace, YuNet)
+opencv-python>=4.10.0
+onnxruntime>=1.19.0
+numpy>=1.26.0,<3.0.0
+pillow>=10.4.0
+
+# Speech, Voice & Audio
+edge-tts>=6.1.12
+sounddevice>=0.5.0
+soundfile>=0.12.1
+pyttsx3>=2.90
+scipy>=1.13.0
+
+# UI Desktop Window & System Automation
+pywebview>=5.1
+pyautogui>=0.9.54
+pywin32>=306
+pyperclip>=1.9.0
+PyGetWindow>=0.0.9
+PyRect>=0.2.0
+psutil>=6.0.0
+
+# Security, Encryption & Utilities
+cryptography>=43.0.0
+pathvalidate>=3.2.0
+PyYAML>=6.0.1
+regex>=2024.5.15
+
+# Cloud AI Inference Providers
+openai>=1.35.0

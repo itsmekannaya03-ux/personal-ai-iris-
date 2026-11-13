@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+website/node_modules/
+.pnp
+.pnp.js
+
+# Next.js and frontend build artifacts
+.next/
+website/.next/
+out/
+build/
+dist/
+*.egg-info/
+
+# Python environments and byte-code
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# Environment files and credentials
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+!.env.example
+*.pem
+*.cert
+*.key
+
+# Editor and OS system files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Databases & local user states
+*.db
+*.sqlite3
+chroma/
+deep_memory.json
+profile.json
+.iris/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test and coverage
+coverage/
+htmlcov/
+
+# Temporary directories and browser caches
+temp_restore/
+temp_test/
+scratch/
+
+# Large binary packages exceeding GitHub 100MB hard limit
+*.zip
+iris_package.zip

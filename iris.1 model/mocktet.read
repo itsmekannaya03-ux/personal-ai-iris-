@@ -1,0 +1,266 @@
+# IRIS AI — TECHNICAL EXAMINATION & ASSESSMENT QUESTION BANK
+# Document Identifier: mocktet.read
+# Total Questions: 100 (50 Multiple-Choice/Direct Q&A + 50 Comprehensive 8-Mark Theory Questions)
+# Notice: All questions are formulated strictly based on the authoritative master reference guide "r.read".
+
+================================================================================
+PART 1: 50 MULTIPLE-CHOICE & DIRECT TECHNICAL QUESTIONS (1 MARK EACH)
+Format: Question (Q) followed directly by the single correct answer (A).
+================================================================================
+
+Q 1 : What language is used to install and autonomously launch IRIS from the command line?
+A : Windows Batch scripting (.bat)
+
+Q 2 : What default local network port is used by the IRIS FastAPI backend server?
+A : Port 5743
+
+Q 3 : What default local network port is used by the IRIS frontend web interface?
+A : Port 3001
+
+Q 4 : What local network port is utilized by the local Ollama daemon for offline model inference?
+A : Port 11434
+
+Q 5 : Which primary Python version powers the IRIS backend engine?
+A : Python 3.12
+
+Q 6 : What neural voice model is used as the primary online female voice in Edge-TTS?
+A : en-US-JennyNeural
+
+Q 7 : What voice preset key name in VoiceEngine maps directly to the primary Jenny voice?
+A : sweet
+
+Q 8 : What exact pitch frequency adjustment is configured to eliminate bold or harsh tones in Jenny's voice?
+A : -7Hz
+
+Q 9 : What speech rate modifier percentage is configured to ensure a natural conversational tempo without slowness?
+A : +0%
+
+Q 10 : What underlying engine provides 100% offline text-to-speech synthesis on Windows when internet is unavailable?
+A : Windows SAPI5 (SpVoice) and pyttsx3
+
+Q 11 : Which female desktop voice is automatically located and selected by SAPI5 in Windows for offline speech?
+A : Microsoft Zira Desktop
+
+Q 12 : Which network port is probed by the fast non-blocking connectivity check to verify internet availability?
+A : DNS Port 53
+
+Q 13 : Which two public IP addresses are probed on port 53 by the fast connectivity check?
+A : 1.1.1.1 and 8.8.8.8
+
+Q 14 : What is the timeout threshold set for the fast socket connectivity probe?
+A : 400 milliseconds (0.4 seconds)
+
+Q 15 : How long is the result of the internet connectivity check cached to avoid network hammering?
+A : 4.0 seconds
+
+Q 16 : What media player subprocess is used by VoiceEngine to execute lag-free serialized audio playback?
+A : ffplay
+
+Q 17 : What process management call is executed by interruptAssistantSpeech to perform clean audio barge-in?
+A : proc.kill()
+
+Q 18 : What primary cloud speech-to-text model is utilized on the Groq API?
+A : whisper-large-v3
+
+Q 19 : Which built-in Windows .NET assembly provides native offline speech recognition without cloud APIs?
+A : System.Speech.dll
+
+Q 20 : Which class in System.Speech is instantiated to transcribe audio files offline?
+A : System.Speech.Recognition.SpeechRecognitionEngine
+
+Q 21 : What grammar mode is loaded by the Windows offline speech engine for free-form spoken speech?
+A : DictationGrammar
+
+Q 22 : What RMS noise floor threshold is configured in the Continuous Voice Daemon to eliminate ambient background noise?
+A : 4.0 RMS floor
+
+Q 23 : How long is the pre-speech audio buffer in the Continuous Voice Daemon to prevent clipping initial syllables?
+A : 750 milliseconds (0.75 seconds)
+
+Q 24 : What silence timeout duration is required before the voice daemon finalizes an audio utterance?
+A : 1.25 seconds (1250 milliseconds)
+
+Q 25 : What method is invoked in the voice daemon to prevent acoustic feedback loops while Iris speaks?
+A : record_assistant_speech
+
+Q 26 : Which 3-billion parameter local Ollama model is installed for conversational reasoning?
+A : llama3.2:3b
+
+Q 27 : Which 1.5-billion parameter local Ollama model is installed for fast coding and technical problem solving?
+A : qwen2.5:1.5b
+
+Q 28 : What is the primary cloud language model utilized on Groq when online?
+A : qwen/qwen3.8-27b
+
+Q 29 : Which hybrid router mode forces all inference through local Ollama models even when internet is connected?
+A : Offline Only Mode
+
+Q 30 : Which hybrid router mode automatically switches from Groq to Ollama when internet connectivity drops?
+A : Auto Mode
+
+Q 31 : Which database engine manages persistent memory and conversations in IRIS?
+A : SQLite 3
+
+Q 32 : What is the exact default filesystem path to the IRIS SQLite memory database?
+A : ~/.iris/memory.db (C:\Users\<User>\.iris\memory.db)
+
+Q 33 : What encryption cipher is applied to deep permanent memories before storing them at rest?
+A : AES-256 (Fernet cipher)
+
+Q 34 : What is the file path of the secret encryption key used for deep permanent memory?
+A : ~/.iris/secret.key
+
+Q 35 : What is the Time-To-Live (TTL) retention period for temporary memories in Tier 1?
+A : 48 hours
+
+Q 36 : What is the Time-To-Live (TTL) retention period for long temporary memories and todos in Tier 2?
+A : 18 days
+
+Q 37 : What is the retention duration for deep permanent memories in Tier 3?
+A : Permanent (infinite retention)
+
+Q 38 : Which database table stores conversation session metadata, person names, and system prompts?
+A : conversations
+
+Q 39 : Which database table stores individual message history along with provider and offline telemetry?
+A : conversation_messages
+
+Q 40 : What standard prefix format is assigned to unique conversation identifiers in SQLite?
+A : conv_
+
+Q 41 : What standard prefix format is assigned to individual message identifiers in SQLite?
+A : msg_
+
+Q 42 : What foreign key action is triggered on conversation_messages when a parent conversation is deleted?
+A : ON DELETE CASCADE
+
+Q 43 : What method in ConversationManager retrieves or creates a dedicated conversation thread for a named individual?
+A : get_or_create_person_chat
+
+Q 44 : What named companion chat thread was verified in the SQLite database during verification testing?
+A : Kannaya Chat
+
+Q 45 : Which subsystem in the core directory corrects misspelled typed and voice commands using phonetic matching?
+A : TypoCorrector
+
+Q 46 : Which controller in the hands directory automates contact search and message dispatch in WhatsApp?
+A : WhatsAppController
+
+Q 47 : Which controller in the hands directory manages video search, playback, and media toggling?
+A : YouTubeController
+
+Q 48 : How many emotional states are classified by the real-time Presence & Emotion Intelligence engine?
+A : 6 states (happy, sad, neutral, angry, surprised, focused)
+
+Q 49 : Which mathematical algorithm is utilized by the Frame Quality Sentinel to detect blank or covered screen frames?
+A : Canny edge detection and Laplacian variance
+
+Q 50 : What version of the OpenCode command-line interface is installed for autonomous coding tasks?
+A : opencode 1.19.0
+
+
+================================================================================
+PART 2: 50 COMPREHENSIVE THEORY & SYSTEM DESIGN QUESTIONS (8 MARKS EACH)
+Notice: These questions require in-depth technical analysis, architectural breakdown,
+workflow descriptions, and failure mitigation strategies based on "r.read".
+================================================================================
+
+Q 51 : [8 Marks] Describe the architectural workflow of the autonomous launcher `setup_iris.bat`. Explain in detail how it validates system prerequisites, handles virtual environment activation, resolves port collisions using Windows network commands, and launches multi-service processes.
+
+Q 52 : [8 Marks] Explain the dual-window desktop overlay architecture of IRIS. Differentiate between the Pinned Top-Center Mini Orb and the Main Assistant Window in terms of physical screen footprint, event listeners, state reflection, and user interaction paradigms.
+
+Q 53 : [8 Marks] Detail the mathematical and algorithmic architecture of the ThinkingOrb engine on the HTML5 canvas. Explain how Fibonacci sphere projection (`fibDir`), 3D trigonometric transformations, depth sorting, and particle alpha calculations render the generative ribbon.
+
+Q 54 : [8 Marks] Map out the four operational visual states of the ThinkingOrb (Idle/Composing, Listening, Thinking, Speaking). For each state, specify its corresponding color palette, animation behavior, status pill styling, and the exact trigger event in the backend engine.
+
+Q 55 : [8 Marks] Analyze the technical problem of cloud TTS network latency when operating in offline environments. Explain how IRIS solves this using the cached socket connectivity probe in `backend/voice_engine.py` to bypass Edge-TTS without causing a 9-second timeout hang.
+
+Q 56 : [8 Marks] Provide an exhaustive technical comparison between the online Edge-TTS pipeline and the offline Windows SAPI5 / pyttsx3 fallback pipeline. Detail the audio formats, synthesis latencies, voice selection criteria, and COM dispatch mechanics utilized by both.
+
+Q 57 : [8 Marks] Discuss the acoustic engineering parameters applied to the primary `en-US-JennyNeural` voice model. Explain why a speech rate of `+0%` and a pitch frequency of `-7Hz` were selected, and analyze how these settings resolve sluggishness and harshness.
+
+Q 58 : [8 Marks] Describe the audio queue serialization and subprocess execution model in VoiceEngine. Explain how single-thread queuing prevents overlapping audio and detail how `interruptAssistantSpeech` implements instantaneous barge-in when a user interrupts.
+
+Q 59 : [8 Marks] Explain the complete 5-tier Speech-to-Text (STT) cascade implemented in IRIS. Detail the operational role, dependencies, target cloud provider, and failure transition logic for every tier from Groq Whisper down to Windows Native STT.
+
+Q 60 : [8 Marks] Analyze the internal architecture of `backend/offline_stt.py`. Explain how it leverages Windows `System.Speech.Recognition`, the DictationGrammar assembly, PowerShell process isolation, and UUID-based temporary file handling to deliver zero-internet transcription.
+
+Q 61 : [8 Marks] Detail the configuration and signal processing mechanics of the Continuous Voice Daemon (`continuous_voice_daemon.py`). Explain the specific roles and values of the 4.0 RMS noise floor, the 750ms pre-speech audio buffer, and the 1.25s silence timeout.
+
+Q 62 : [8 Marks] Explain the acoustic feedback loop problem in always-on desktop AI voice assistants. Detail the exact mechanism implemented in `record_assistant_speech` that prevents IRIS from hearing and transcribing her own spoken responses through the hardware microphone.
+
+Q 63 : [8 Marks] Outline the design and responsibilities of the `HybridModelRouter` (`hybrid_model_router.py`). Explain how the router determines active connectivity, enforces routing policies across its four modes, and guarantees uninterrupted conversational intelligence.
+
+Q 64 : [8 Marks] Describe the integration and capabilities of the `OllamaClient` (`ollama_client.py`). Explain how it probes the daemon at `http://localhost:11434`, caches health states, lists installed models, and handles streaming token generation versus synchronous chat requests.
+
+Q 65 : [8 Marks] Compare the two locally installed Ollama models—`llama3.2:3b` and `qwen2.5:1.5b`. Analyze their parameter sizes, memory footprints, computational trade-offs, and specialized task allocations within the IRIS runtime.
+
+Q 66 : [8 Marks] Explain the difference between cold-start load latency and warm-cache inference latency when running local Ollama models on consumer desktop hardware. Detail how IRIS's startup pre-warming routine mitigates initial cold-start delays.
+
+Q 67 : [8 Marks] Detail the structure and lifecycle of IRIS's 3-Tier Core Memory system in SQLite (`memory/db.py`). Explain the storage purpose, Time-To-Live (TTL) expiration rules, and column definitions for `temp_memories`, `long_temp_memories`, and `deep_memories`.
+
+Q 68 : [8 Marks] Describe the field-level security architecture applied to deep permanent memories. Explain how the AES-256 Fernet encryption cipher is initialized, where the secret key is persisted, and why encryption at rest is mandatory for personal user identity data.
+
+Q 69 : [8 Marks] Analyze the relational schema design of the `conversations` and `conversation_messages` tables in SQLite. Detail the primary keys, foreign key constraints, data types, indexing strategies, and explain why `ON DELETE CASCADE` is critical.
+
+Q 70 : [8 Marks] Explain the architectural responsibilities of `ConversationManager` (`memory/conversation_manager.py`). Detail how it implements thread creation, chronological history retrieval, conversation renaming, cascading deletion, and SQL-based message search.
+
+Q 71 : [8 Marks] Detail the implementation of dedicated Person Chats (such as Kannaya Chat). Explain how `get_or_create_person_chat` discovers existing person threads, injects empathetic system prompts, and prevents personal conversation data from leaking into general topic chats.
+
+Q 72 : [8 Marks] Describe how multi-turn conversation context is constructed and injected into `IrisBrain.think()`. Explain how message limits are managed, how user and assistant turns are formatted, and how context history is maintained across extended dialogues.
+
+Q 73 : [8 Marks] Detail the REST API endpoints implemented in `backend/server/api.py` for model routing and conversation management. Specify the HTTP methods, URI paths, request payload structures, and response schemas for all target endpoints.
+
+Q 74 : [8 Marks] Explain the enhancements made to `desktop_overlay/main_window.html` for conversation management. Describe the user experience, CSS transitions, and DOM events associated with the slide-out Chats Drawer (`#chats-sidebar`) and the model selector modal (`#model-modal`).
+
+Q 75 : [8 Marks] Explain the visual metadata tagging system implemented in the assistant chat bubbles. Detail how provider tags indicate whether a response originated from cloud intelligence (`⚡ Online • Groq`) or local intelligence (`🔒 Offline • Ollama`).
+
+Q 76 : [8 Marks] Analyze the role of `TypoCorrector` (`core/typo_corrector.py`). Explain how phonetic matching and Levenshtein string distance algorithms correct distorted or imperfect user voice inputs before dispatching commands to the action decider.
+
+Q 77 : [8 Marks] Describe the architecture of `AppLauncher` (`hands/app_launcher.py`). Explain how it searches Windows registry keys, Start Menu directories, and system PATH variables to locate executable binaries and launch them asynchronously via `subprocess.Popen`.
+
+Q 78 : [8 Marks] Explain the system control capabilities encapsulated in `SystemControl` (`hands/system_control.py`). Detail how IRIS manipulates Windows master volume, screen brightness, workstation locking via `rundll32.exe`, and window minimization via Shell COM objects.
+
+Q 79 : [8 Marks] Detail the workflow of the WhatsApp Controller (`hands/whatsapp_controller.py`). Explain how IRIS locates a contact name, prepares message buffers, handles window focus, and automates message transmission across desktop and web sessions.
+
+Q 80 : [8 Marks] Describe the implementation of `YouTubeController` (`hands/youtube_controller.py`). Explain how media intent is decoded from spoken phrases, how search queries are formatted, and how playback and volume controls are executed.
+
+Q 81 : [8 Marks] Explain the coordination between `TodoManager` and `TodoScheduler`. Describe how pending tasks stored in Layer 2 memory are tracked against real-time system clocks and how spoken alarm notifications are dispatched through `VoiceEngine`.
+
+Q 82 : [8 Marks] Describe the camera presence and face detection pipeline in `vision/presence_emotion.py`. Explain how OpenCV captures local webcam frames, detects facial landmarks, and computes facial similarity metrics.
+
+Q 83 : [8 Marks] Detail the single-owner biometric security vault implemented in IRIS. Explain how facial embeddings protect the workstation, how unauthorized individuals are detected, and what defensive actions IRIS takes when an unauthorized user attempts to issue commands.
+
+Q 84 : [8 Marks] Explain the real-time emotion classification system. Describe the 6 emotional categories recognized by IRIS, and explain how detected emotions modulate conversational empathy and ThinkingOrb lighting.
+
+Q 85 : [8 Marks] Analyze the architecture of the Screen Vision subsystem (`vision/screenshot.py` and `vision/ocr.py`). Explain how desktop screenshots are captured across multiple displays and how OCR extracts text, code snippets, and UI error dialogs.
+
+Q 86 : [8 Marks] Describe the Frame Quality Sentinel algorithm. Explain how Laplacian variance and Canny edge ratio metrics classify captured camera frames into `ok`, `blurry`, or `blank`, and explain why this validation step prevents AI hallucinations.
+
+Q 87 : [8 Marks] Detail the multimodal vision query pipeline (`/vision/see`). Explain how base64-encoded desktop or camera frames are packaged with prompt instructions and dispatched to Gemini Flash or OpenRouter vision models.
+
+Q 88 : [8 Marks] Describe the heuristic rule-based fallback intelligence implemented in `backend/engine/hybrid_model_router.py`. Detail the specific categories of queries handled by rule-based fallbacks and explain why this guarantee prevents system deadlocks.
+
+Q 89 : [8 Marks] Explain the PyWebView direct in-process bridge architecture in `desktop_overlay/overlay_manager.py`. Explain why sending chat requests through native bridge methods bypasses WebView2 CORS restrictions, and detail the parameters forwarded by `send_chat`.
+
+Q 90 : [8 Marks] Analyze the startup pre-warming architecture implemented in `run_server.py`. Explain why LLM generation, voice synthesis, camera stream initialization, and audio driver polling are executed in parallel background threads during boot.
+
+Q 91 : [8 Marks] Explain the current implementation state and architectural design of the OpenCode CLI autonomous coding pipeline. Detail how `opencode.ps1` is called and describe the planned multi-step loop for autonomous software debugging.
+
+Q 92 : [8 Marks] Discuss the in-progress implementation of local Piper Neural TTS. Explain why ONNX runtime compilation is required for Windows, and compare Piper's prospective performance against the active SAPI5 / pyttsx3 fallback.
+
+Q 93 : [8 Marks] Analyze the current status of the local PyTorch Whisper STT implementation in `backend/stt.py`. Explain why the `ModuleNotFoundError: No module named 'torch'` occurred and how the Windows Native Speech Recognition engine successfully fills this gap.
+
+Q 94 : [8 Marks] Describe the in-progress semantic vector similarity search system for conversation memory. Explain how the `embeddings` table in SQLite is structured and discuss the planned migration from lexical SQL queries to vector cosine similarity retrieval.
+
+Q 95 : [8 Marks] Explain the structure, coverage, and execution flow of the automated verification test suite `scratch/test_hybrid_offline_suite.py`. Detail the validation assertions for offline TTS, offline STT, Ollama, hybrid routing, and conversation isolation.
+
+Q 96 : [8 Marks] Trace the complete end-to-end data flow of a user speaking the phrase "Hello Iris, open Notepad" in a 100% offline environment. Follow the audio signal from hardware microphone capture through VAD, offline STT, Intent detection, AppLauncher execution, and offline TTS response playback.
+
+Q 97 : [8 Marks] Trace the complete end-to-end data flow when the user sends a message in a dedicated Person Chat ("Kannaya") while connected to the internet. Detail how the UI drawer triggers the request, how SQLite persists the turn, how Groq processes the context, and how the UI updates.
+
+Q 98 : [8 Marks] Analyze how IRIS achieves zero cloud vendor lock-in. Explain how the system architecture decouples user interface, speech processing, inference routing, and memory storage from any single cloud provider or commercial AI vendor.
+
+Q 99 : [8 Marks] Discuss the failure mitigation strategies implemented across IRIS. Explain how the system handles dropped internet connections, missing API keys, frozen LLM daemons, dark webcam frames, and audio device disconnections without crashing.
+
+Q 100 : [8 Marks] Provide a comprehensive architectural synthesis of IRIS as an autonomous, multimodal desktop AI companion. Summarize how the interplay between physical Windows hands, multi-tier encrypted memory, hybrid intelligence, and zero-internet speech guarantees creates a resilient, embodied AGI assistant.
