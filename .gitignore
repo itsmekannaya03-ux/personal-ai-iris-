@@ -11,6 +11,7 @@ out/
 build/
 dist/
 *.egg-info/
+*.tsbuildinfo
 
 # Python environments and byte-code
 __pycache__/
