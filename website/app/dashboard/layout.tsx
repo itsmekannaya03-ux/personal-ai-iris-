@@ -29,10 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="relative min-h-screen bg-[#0a0a0f] overflow-x-hidden">
       {/* 3D Iris Flower Background across all dashboard pages: Overview, Chat, Download, Profile, Settings */}
       <IrisFlowerBackground
-        className={cn(
-          "md:left-64 transition-transform duration-500",
-          pathname === "/dashboard/chat" ? "lg:translate-x-36 xl:translate-x-48" : ""
-        )}
+        className="md:left-64"
         scale={0.65}
         tiltDegrees={-20}
         speedSeconds={70}

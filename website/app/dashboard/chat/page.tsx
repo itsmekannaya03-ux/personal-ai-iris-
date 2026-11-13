@@ -505,40 +505,40 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6.5rem)] w-full max-w-[460px] lg:max-w-[480px] xl:max-w-[500px] mr-auto bg-[#070914]/85 backdrop-blur-2xl border border-white/10 rounded-3xl p-4 sm:p-5 shadow-2xl relative z-20">
-      {/* Compact Left-Corner Header */}
-      <div className="flex items-start justify-between gap-2 mb-3 border-b border-white/10 pb-3">
+    <div className="relative flex flex-col h-[calc(100vh-6rem)] w-full max-w-6xl mx-auto justify-between">
+      {/* 1. Normal Top Header across the top */}
+      <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3 z-20">
         <div>
-          <h1 className="text-sm sm:text-base font-bold flex items-center gap-1.5 text-white">
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span>REN &bull; Systems Architect</span>
+          <h1 className="text-lg font-bold flex items-center gap-2 text-white">
+            <Sparkles className="w-5 h-5 text-cyan-400" />
+            <span>REN &bull; IRIS Systems Architect & Frontend Controller</span>
           </h1>
-          <p className="text-[11px] text-white/50 mt-0.5 flex flex-wrap items-center gap-1.5 font-mono">
-            <span>AI: <strong className="text-cyan-300">REN</strong></span>
+          <p className="text-xs text-white/50 mt-0.5 flex flex-wrap items-center gap-2 font-mono">
+            <span>Architect AI: <code className="text-cyan-300">REN</code></span>
             <span>&bull;</span>
-            <span>Model: <span className="text-iris-400">iris.1</span></span>
+            <span>Controlling: <code className="text-iris-400">iris.1 model</code></span>
             <span>&bull;</span>
             {engineOnline ? (
-              <span className="flex items-center gap-1 text-emerald-400 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Online
+              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                IRIS Engine Online (:5743)
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-cyan-300 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                Active
+              <span className="flex items-center gap-1.5 text-cyan-300 font-medium">
+                <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                REN Active (Ready to Chat, Customize & Deploy)
               </span>
             )}
           </p>
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-cyan-300/90 bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 rounded-md font-mono shrink-0">
-          <Palette className="w-3 h-3 text-cyan-400" />
-          <span>Live Control</span>
+        <div className="flex items-center gap-2 text-xs text-cyan-300/80 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 rounded-xl">
+          <Palette className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Live Frontend Control Enabled</span>
         </div>
       </div>
 
       {convoStatus && (
-        <div className="mb-2">
+        <div className="mb-2 z-20">
           <TokenBar
             tokensUsed={convoStatus.tokens_used}
             maxTokens={convoStatus.max_tokens}
@@ -551,57 +551,50 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4 text-white/40">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-2">
-              <Bot className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-medium text-white/70">Chat with REN</span>
-            <span className="text-[11px] text-white/40 mt-1 max-w-[260px] leading-relaxed">
-              Ask me to customize the frontend, switch themes, or generate your deployment command.
-            </span>
-          </div>
-        ) : (
-          messages.map((msg, i) => (
+      {/* 2. Middle Content Area: ONLY THE MESSAGES ARE IN THE LEFT CORNER */}
+      <div className="flex-1 min-h-0 relative z-20 overflow-hidden flex flex-col justify-end pointer-events-none">
+        <div className="pointer-events-auto w-full max-w-md lg:max-w-lg mr-auto max-h-[calc(100vh-18rem)] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+          {messages.map((msg, i) => (
             <ChatMessage key={i} role={msg.role} content={msg.content} timestamp={msg.timestamp} />
-          ))
-        )}
+          ))}
 
-        {loading && (
-          <div className="flex gap-2.5">
-            <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#0f1322] border border-cyan-500/30 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          {loading && (
+            <div className="flex gap-2.5">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#0f1322] border border-cyan-500/30 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+              </div>
+              <div className="flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-[#0b0e1b]/90 border border-white/10 shadow-xl backdrop-blur-xl">
+                <span className="w-2 h-2 rounded-full bg-cyan-400/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 rounded-full bg-cyan-400/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 rounded-full bg-cyan-400/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-[#0b0e1b]/80 border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          </div>
-        )}
+          )}
 
-        <div ref={bottomRef} />
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      {/* Quick Action Pills */}
-      <div className="pt-2 pb-2 flex flex-wrap gap-1.5">
-        {quickPrompts.slice(0, 4).map((p, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleSend(p.query)}
-            disabled={loading}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-cyan-500/10 active:bg-cyan-500/20 text-white/70 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all duration-75 active:scale-95 select-none cursor-pointer touch-manipulation flex items-center gap-1"
-          >
-            <span>{p.label}</span>
-          </button>
-        ))}
-      </div>
+      {/* 3. Bottom Typing Area: NORMAL FULLY IN BOTTOM */}
+      <div className="w-full pt-3 z-20">
+        {/* Quick Action Pills across the bottom */}
+        <div className="pb-2.5 flex flex-wrap gap-2">
+          {quickPrompts.map((p, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSend(p.query)}
+              disabled={loading}
+              className="text-xs px-3 py-1.5 rounded-xl bg-[#0a0d1a]/80 backdrop-blur-md hover:bg-cyan-500/15 active:bg-cyan-500/25 text-white/70 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all duration-75 active:scale-95 select-none cursor-pointer flex items-center gap-1.5 shadow-sm"
+            >
+              <span>{p.label}</span>
+            </button>
+          ))}
+        </div>
 
-      {/* Input */}
-      <div className="mt-1">
-        <ChatInput onSend={handleSend} disabled={loading} />
+        {/* Normal Full-Width Chat Input fully in the bottom */}
+        <div className="w-full">
+          <ChatInput onSend={handleSend} disabled={loading} />
+        </div>
       </div>
     </div>
   )
