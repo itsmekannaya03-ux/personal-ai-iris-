@@ -62,6 +62,8 @@ htmlcov/
 temp_restore/
 temp_test/
 scratch/
+screenshot_*.png
+*.png.tmp
 
 # Large binary packages exceeding GitHub 100MB hard limit
 *.zip
