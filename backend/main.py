@@ -1,22 +1,37 @@
 from contextlib import asynccontextmanager
+import traceback
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-import traceback
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
-from backend.database import create_tables
+from backend.database import create_tables, check_database_connection, engine
 from backend import models
 from backend.routers import auth, profile, subscriptions, installer, webhooks
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        await create_tables()
-    except Exception as e:
-        print(f"[WARNING] Database connection failed ({e}). Running without live PostgreSQL connection.")
+    # Verify live PostgreSQL connection on startup
+    status = await check_database_connection()
+    if status["connected"]:
+        print(f"[DATABASE] Connected to PostgreSQL at {status['host']} (database: {status['database']}, user: {status.get('user')})")
+        try:
+            await create_tables()
+            print("[DATABASE] Database tables verified successfully.")
+        except Exception as e:
+            print(f"[DATABASE ERROR] Table initialization failed: {e}")
+    else:
+        print(f"[DATABASE ERROR] Could NOT connect to PostgreSQL at {status['host']}: {status.get('error')}")
+        print("[DATABASE ERROR] Startup warning: Database is unreachable. Check your network or credentials.")
+
     yield
+
+    # Clean shutdown of connection pool
+    try:
+        await engine.dispose()
+    except Exception:
+        pass
 
 
 app = FastAPI(
@@ -25,9 +40,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+if not cors_origins:
+    cors_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS.split(","),
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,12 +58,20 @@ app.include_router(subscriptions.router)
 app.include_router(installer.router)
 app.include_router(webhooks.router)
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    with open("fastapi_error.log", "a") as f:
+    with open("fastapi_error.log", "a", encoding="utf-8") as f:
         f.write(traceback.format_exc())
     return JSONResponse(status_code=500, content={"detail": str(exc)})
 
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.1.0"}
+    db_status = await check_database_connection()
+    return {
+        "status": "ok" if db_status["connected"] else "degraded",
+        "database_connected": db_status["connected"],
+        "database_host": db_status.get("host"),
+        "version": "0.1.0",
+    }
