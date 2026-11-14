@@ -69,3 +69,4 @@ screenshot_*.png
 # Large binary packages exceeding GitHub 100MB hard limit
 *.zip
 iris_package.zip
+!website/public/downloads/iris-ai.zip

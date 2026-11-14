@@ -21,6 +21,10 @@ IDENTITY_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "identity")
 REFERENCE_PHOTO = IDENTITY_DIR
 MODEL_PATH = os.path.join(IDENTITY_DIR, "face_model.pkl")
 SFACE_MODEL = os.path.join(os.path.dirname(__file__), "face_recognition_sface_2021dec.onnx")
+if not os.path.isfile(SFACE_MODEL):
+    _alt = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "vision", "data", "face_recognition_sface_2021dec.onnx"))
+    if os.path.isfile(_alt):
+        SFACE_MODEL = _alt
 SFACE_THRESHOLD = 0.36
 
 

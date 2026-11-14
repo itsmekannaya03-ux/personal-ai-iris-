@@ -4,28 +4,24 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Card } from "@/components/ui/Card"
 import Link from "next/link"
-import dynamic from "next/dynamic"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import { Sparkles, ArrowLeft, Shield, Zap, Eye, EyeOff } from "lucide-react"
-
-// Dynamically load the 3D Robot so it executes exclusively on the client
-const RobotCharacter = dynamic(
-  () => import("@/components/ui/RobotCharacter").then((mod) => mod.RobotCharacter),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-)
+import RobotCharacter from "@/components/ui/RobotCharacter"
 
 export default function LoginPage() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [form, setForm] = useState({ email: "", password: "" })
   const [isTyping, setIsTyping] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -67,17 +63,19 @@ export default function LoginPage() {
           Glides seamlessly along the floor across the whole screen.
           When cursor moves right, it passes right under the login card!
           ========================================================= */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-        <RobotCharacter
-          color="#d4d4d8"
-          pantallaColor="#00d4b8"
-          pantallaBrillo={1.4}
-          scale={1.35}
-          theme="light"
-          className="w-full h-full"
-          isTyping={isTyping}
-        />
-      </div>
+      {mounted && (
+        <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+          <RobotCharacter
+            color="#d4d4d8"
+            pantallaColor="#00d4b8"
+            pantallaBrillo={1.4}
+            scale={1.35}
+            theme="light"
+            className="w-full h-full"
+            isTyping={isTyping}
+          />
+        </div>
+      )}
 
       {/* Top Navigation Bar */}
       <header className="relative z-20 w-full px-6 py-6 max-w-7xl mx-auto flex items-center justify-between pointer-events-auto">

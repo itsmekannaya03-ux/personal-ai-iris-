@@ -55,10 +55,17 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`
   }
 
-  let res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    })
+  } catch (err: any) {
+    throw new Error(
+      "Unable to reach the server. If this is the first visit, the cloud backend may be waking up—please try again in 15-30 seconds."
+    )
+  }
 
   if (res.status === 401 && token) {
     if (!isRefreshing) {
@@ -96,8 +103,19 @@ async function request<T>(
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: "Request failed" }))
-    throw new Error(error.detail || `HTTP ${res.status}`)
+    let detail = ""
+    try {
+      const error = await res.json()
+      detail = error.detail || error.message
+    } catch {
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        detail = "The backend server is waking up. Please wait 15-30 seconds and try again."
+      }
+    }
+    if (!detail) {
+      detail = res.status === 401 ? "Invalid email or password. Please check your credentials or click Sign up if you are new." : `Request failed (HTTP ${res.status})`
+    }
+    throw new Error(detail)
   }
 
   return res.json()

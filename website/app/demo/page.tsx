@@ -1,3 +1,5 @@
+"use client";
+
 import DemoOne from "@/components/demo";
 
 export default function DemoPage() {

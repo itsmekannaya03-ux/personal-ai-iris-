@@ -1602,3 +1602,6 @@ export function NightFlowerValley() {
     </div>
   )
 }
+
+export default NightFlowerValley
+

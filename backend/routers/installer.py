@@ -15,6 +15,7 @@ router = APIRouter(tags=["installer"])
 
 
 def _generate_windows_script(token: str, base_url: str) -> str:
+    zip_url = "https://personal-ai-iris.vercel.app/downloads/iris-ai.zip"
     return f'''@echo off
 setlocal enabledelayedexpansion
 title IRIS AI Installer
@@ -26,8 +27,8 @@ echo ╰────────────────────────
 echo.
 
 set "IRIS_DIR=%USERPROFILE%\\.iris"
-set "ENGINE_DIR=%IRIS_DIR%\\engine"
-set "MODEL_DIR=%ENGINE_DIR%\\iris.1 model"
+set "ENGINE_DIR=%USERPROFILE%\\Desktop\\IRIS-AI"
+set "ZIP_FILE=%TEMP%\\iris-ai.zip"
 
 :: 1. Check Python
 where python >nul 2>nul
@@ -38,68 +39,41 @@ if %ERRORLEVEL% neq 0 (
     del "%TEMP%\\py_install.exe" >nul 2>nul
 )
 
-:: 2. Check IRIS Neural Core Runtime
-where IRIS Neural Core >nul 2>nul
-if %ERRORLEVEL% neq 0 (
-    echo → Configuring IRIS Neural Engine...
-    curl -fsSL -o "%TEMP%\\IRIS Neural Core_setup.exe" "https://IRIS Neural Core.com/download/IRIS Neural CoreSetup.exe"
-    start /wait "" "%TEMP%\\IRIS Neural Core_setup.exe" /silent
-    del "%TEMP%\\IRIS Neural Core_setup.exe" >nul 2>nul
-)
-
-:: 3. Create directories
+:: 2. Create directories
 if not exist "%IRIS_DIR%" mkdir "%IRIS_DIR%"
 if not exist "%IRIS_DIR%\\chroma" mkdir "%IRIS_DIR%\\chroma"
 if not exist "%IRIS_DIR%\\logs" mkdir "%IRIS_DIR%\\logs"
 if not exist "%IRIS_DIR%\\memory" mkdir "%IRIS_DIR%\\memory"
 
-:: 4. Pull AI model
-echo → Initializing IRIS.1 Neural Model...
-IRIS Neural Core pull llama3.2:3b >nul 2>nul
-echo   Model ready!
-
-:: 5. Fetch profile from website
+:: 3. Fetch profile from website
 echo → Fetching your customized profile...
-curl -fsSL "{base_url}/installer/{token}" -o "%IRIS_DIR%\\profile.json"
+curl -fsSL "{base_url}/installer/{token}" -o "%IRIS_DIR%\\profile.json" 2>nul
 echo   Profile loaded!
 
-:: 6. Download / Clone IRIS engine
-echo → Setting up IRIS engine (iris.1 model)...
-if exist "%ENGINE_DIR%" rmdir /s /q "%ENGINE_DIR%"
-git clone --depth 1 https://github.com/iris-ai/iris-engine "%ENGINE_DIR%" 2>nul
-if %ERRORLEVEL% neq 0 (
-    if not exist "%ENGINE_DIR%" mkdir "%ENGINE_DIR%"
+:: 4. Download IRIS AI package (iris-ai.zip)
+echo → Downloading IRIS AI Package (72 MB)...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '{zip_url}' -OutFile '%ZIP_FILE%'"
+
+if not exist "%ZIP_FILE%" (
+    echo [ERROR] Failed to download IRIS AI package.
+    pause
+    exit /b 1
 )
 
-:: 7. Install Python dependencies
-echo → Installing Python dependencies...
-if exist "%ENGINE_DIR%\\requirements.txt" (
-    pip install -r "%ENGINE_DIR%\\requirements.txt" 2>nul
-) else (
-    pip install fastapi uvicorn websockets requests aiohttp opencv-python onnxruntime numpy pillow edge-tts sounddevice soundfile pywebview pyautogui pywin32 psutil 2>nul
-)
-
-:: 8. Create startup script
-echo @echo off > "%IRIS_DIR%\\start.bat"
-echo cd /d "%ENGINE_DIR%" >> "%IRIS_DIR%\\start.bat"
-echo python run_server.py >> "%IRIS_DIR%\\start.bat"
-
-:: 9. Add to PATH for global 'iris' command
-for /f "skip=2 tokens=3*" %%A in ('reg query HKCU\\Environment /v Path 2^>nul') do set "userPath=%%A %%B"
-if "!userPath!"=="!userPath:%IRIS_DIR%=!" (
-    reg add HKCU\\Environment /v Path /t REG_EXPAND_SZ /d "!userPath!;%IRIS_DIR%" /f
-)
+:: 5. Extract to Desktop
+echo → Extracting to %ENGINE_DIR%...
+if not exist "%ENGINE_DIR%" mkdir "%ENGINE_DIR%"
+powershell -Command "Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%ENGINE_DIR%' -Force"
+del "%ZIP_FILE%" >nul 2>nul
 
 echo.
 echo ╭──────────────────────────────────────╮
 echo │   IRIS AI installed successfully!    │
-echo │                                      │
-echo │   Dashboard: http://localhost:5743   │
-echo │   Or type:   iris                    │
+echo │   Location: %ENGINE_DIR%              │
 echo ╰──────────────────────────────────────╯
 echo.
 echo → Starting IRIS AI...
-start "" "%IRIS_DIR%\\start.bat"
+start "" "%ENGINE_DIR%\\run.bat"
 '''
 
 

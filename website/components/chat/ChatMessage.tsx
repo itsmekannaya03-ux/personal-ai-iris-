@@ -20,7 +20,7 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
   }
 
   return (
-    <div className="my-2.5 rounded-xl border border-cyan-500/30 bg-[#080a14] overflow-hidden shadow-lg shadow-cyan-950/20">
+    <div className="my-2.5 rounded-xl border border-cyan-500/30 bg-[#080a14] overflow-hidden shadow-lg shadow-cyan-950/20 max-w-full min-w-0">
       <div className="flex items-center justify-between px-3 py-1.5 bg-white/[0.04] border-b border-white/10 text-xs font-mono text-cyan-300">
         <span className="flex items-center gap-1.5">
           <Terminal className="w-3.5 h-3.5 text-cyan-400" />
@@ -43,7 +43,7 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
           )}
         </button>
       </div>
-      <div className="p-3 overflow-x-auto text-xs font-mono text-cyan-100 bg-black/40 select-all whitespace-pre leading-relaxed">
+      <div className="p-3 text-xs font-mono text-cyan-100 bg-black/40 select-all whitespace-pre-wrap break-all leading-relaxed overflow-x-auto scrollbar-thin">
         {code.trim()}
       </div>
     </div>
@@ -64,7 +64,7 @@ export function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
   const parts = content.split(/(```[\s\S]*?```)/g)
 
   return (
-    <div className={cn("flex gap-3 group", isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={cn("flex gap-3 group w-full min-w-0", isUser ? "flex-row-reverse" : "flex-row")}>
       <div
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shadow-md",
@@ -76,7 +76,7 @@ export function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
         {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-cyan-400" />}
       </div>
 
-      <div className={cn("flex flex-col max-w-[85%]", isUser ? "items-end" : "items-start")}>
+      <div className={cn("flex flex-col max-w-[90%] min-w-0", isUser ? "items-end" : "items-start")}>
         <div className="flex items-center gap-1.5 px-1 mb-1 text-[11px] font-semibold tracking-wide">
           {isUser ? (
             <span className="text-white/50">You</span>
@@ -89,7 +89,7 @@ export function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
         </div>
         <div
           className={cn(
-            "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+            "rounded-2xl px-4 py-3 text-sm leading-relaxed max-w-full min-w-0 break-words overflow-hidden",
             isUser
               ? "bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-500/30 text-white rounded-tr-sm"
               : "bg-[#0b0e1b]/80 border border-white/10 text-white/90 rounded-tl-sm backdrop-blur-md"
@@ -107,7 +107,7 @@ export function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
               return <CodeBlock key={index} code={code} lang={lang} />
             }
             return (
-              <span key={index} className="whitespace-pre-wrap">
+              <span key={index} className="whitespace-pre-wrap break-words">
                 {part}
               </span>
             )

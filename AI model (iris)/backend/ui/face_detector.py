@@ -12,7 +12,16 @@ import logging
 logger = logging.getLogger("iris.ui.face_detector")
 
 YUNET_MODEL = os.path.join(os.path.dirname(__file__), "face_detection_yunet_2023mar.onnx")
+if not os.path.isfile(YUNET_MODEL):
+    _alt_yunet = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "vision", "data", "face_detection_yunet_2023mar.onnx"))
+    if os.path.isfile(_alt_yunet):
+        YUNET_MODEL = _alt_yunet
+
 HAAR_MODEL = os.path.join(os.path.dirname(__file__), "haarcascade_frontalface_default.xml")
+if not os.path.isfile(HAAR_MODEL):
+    _alt_haar = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "vision", "data", "haarcascade_frontalface_default.xml"))
+    if os.path.isfile(_alt_haar):
+        HAAR_MODEL = _alt_haar
 
 
 class FaceDetector:

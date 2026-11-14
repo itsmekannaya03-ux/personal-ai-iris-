@@ -1,12 +1,17 @@
 "use client"
 
-import dynamic from "next/dynamic"
+import { useState, useEffect } from "react"
+import NightFlowerValley from "@/components/ui/NightFlowerValley"
 
-const NightFlowerValley = dynamic(
-  () => import("@/components/ui/NightFlowerValley").then((mod) => mod.NightFlowerValley),
-  {
-    ssr: false,
-    loading: () => (
+export default function PricingPage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
       <div className="w-full h-screen bg-[#02040a] flex items-center justify-center text-[#f5efe2]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
@@ -15,11 +20,9 @@ const NightFlowerValley = dynamic(
           </span>
         </div>
       </div>
-    ),
+    )
   }
-)
 
-export default function PricingPage() {
   return (
     <main className="w-full h-screen overflow-hidden bg-[#02040a]">
       <NightFlowerValley />
