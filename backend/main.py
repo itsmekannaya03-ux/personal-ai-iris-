@@ -40,13 +40,26 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
-if not cors_origins:
-    cors_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+# Parse and sanitize configured origins: trim whitespace, quotes, trailing slashes
+cors_origins = [
+    origin.strip().strip("'\"").rstrip("/")
+    for origin in settings.CORS_ORIGINS.split(",")
+    if origin.strip()
+]
+
+# Ensure the exact production Vercel frontend origin is explicitly allowed
+if "https://personal-ai-iris.vercel.app" not in cors_origins:
+    cors_origins.append("https://personal-ai-iris.vercel.app")
+
+# Ensure localhost defaults
+for dev_origin in ("http://localhost:3000", "http://127.0.0.1:3000"):
+    if dev_origin not in cors_origins:
+        cors_origins.append(dev_origin)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=r"^https://personal-ai-iris.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

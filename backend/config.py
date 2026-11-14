@@ -77,6 +77,26 @@ def sanitize_sync_db_url(url: str) -> str:
     return f"{clean_prefix}://{rest}"
 
 
+def sanitize_cors_origins(origins_input: str) -> str:
+    """Trim whitespace, quotes, and trailing slashes from comma-separated CORS origins,
+
+    and ensure the production frontend origin and local dev origins are always included.
+    """
+    cleaned_list: list[str] = [
+        "https://personal-ai-iris.vercel.app",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+    if origins_input:
+        for item in str(origins_input).split(","):
+            cleaned = item.strip().strip("'\"").rstrip("/")
+            if cleaned and cleaned not in cleaned_list:
+                cleaned_list.append(cleaned)
+
+    return ",".join(cleaned_list)
+
+
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/iris_db"
     DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@127.0.0.1:5432/iris_db"
@@ -89,7 +109,7 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = ""
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = "https://personal-ai-iris.vercel.app,http://localhost:3000,http://127.0.0.1:3000"
     BASE_URL: str = "http://localhost:8001"
 
     @field_validator("DATABASE_URL", mode="before")
@@ -101,6 +121,19 @@ class Settings(BaseSettings):
     @classmethod
     def validate_sync_db_url(cls, v: str) -> str:
         return sanitize_sync_db_url(v)
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v: str) -> str:
+        return sanitize_cors_origins(v)
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [
+            origin.strip().strip("'\"").rstrip("/")
+            for origin in self.CORS_ORIGINS.split(",")
+            if origin.strip()
+        ]
 
     model_config = SettingsConfigDict(
         env_file=("backend/.env", ".env"),
